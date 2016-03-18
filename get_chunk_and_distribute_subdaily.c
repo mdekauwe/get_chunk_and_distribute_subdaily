@@ -1068,15 +1068,13 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
+    fprintf(ofp, "# Sub-Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
                                                            latitude, longitude);
     fprintf(ofp, "# Data from %d-%d\n", c->start_yr, c->end_yr);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
-    fprintf(ofp, "#--,--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
-    fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
-    fprintf(ofp, "#year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
-    fprintf(ofp, "vpd_avg,co2,ndep,wind,atmos_press,par,wind_am,wind_pm,");
-    fprintf(ofp, "sw_rad_am,sw_rad_pm\n");
+    fprintf(ofp, "#--,--,--,mm/30min,umol/m2/s,degC,degC,kPa,ppm,t/ha/30min,");
+    fprintf(ofp, "m/s,kPa,\n");
+    fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
     co2 = 285.0;
     ndep = -9999.9;
@@ -1200,16 +1198,13 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
+    fprintf(ofp, "# Sub-Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
                                                            latitude, longitude);
     fprintf(ofp, "# Data from %d-%d\n", c->start_yr_forcing, c->end_yr_forcing);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
-    fprintf(ofp, "#--,--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
-    fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
-    fprintf(ofp, "#year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
-    fprintf(ofp, "vpd_avg,co2,ndep,wind,atmos_press,par,wind_am,wind_pm,");
-    fprintf(ofp, "sw_rad_am,sw_rad_pm\n");
-
+    fprintf(ofp, "#--,--,--,mm/30min,umol/m2/s,degC,degC,kPa,ppm,t/ha/30min,");
+    fprintf(ofp, "m/s,kPa,\n");
+    fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
     co2 = 285.0;
     ndep = -9999.9;

@@ -1035,8 +1035,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     long  date_offset;
     int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year;
-    float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
-    float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
+    float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0;
+    float vpd_avg=0.0, par_day=0.0, sw_am=0.0;
     float Tmean=0.0, Tsoil=0.0, vpd_am=0.0, vpd_pm=0.0;
     float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
     float tmin_tomorrow;
@@ -1080,8 +1080,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     ndep = -9999.9;
     wind_sp = 3.0; /* Haverd et al. 2012 */
     atpress = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
-    wind_am = wind_sp;
-    wind_pm = wind_sp;
 
     for (k = 0; k < len_shuffled_yrs; k++) {
         yr_to_get = shuffled_yrs[k];
@@ -1149,10 +1147,10 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             rainfall = rain_ij[kk];
 
             fprintf(ofp,
-            "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
+            "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
              year, doy_cnt+1, sw, Tmean, rainfall, Tsoil, Tam, Tpm, vpd_am,
-             vpd_pm, vpd_avg, co2, ndep, wind_sp, atpress, par_day, wind_am,
-             wind_pm, sw_am, sw_pm);
+             vpd_pm, vpd_avg, co2, ndep, wind_sp, atpress, par_day,
+             sw_am, sw_pm);
 
              doy_cnt++;
         }
@@ -1177,8 +1175,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     long date_offset;
     int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
-    float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
-    float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
+    float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0;
+    float vpd_avg=0.0, par_day=0.0, sw_am=0.0;
     float Tmean=0.0, Tsoil=0.0, vpd_am=0.0, vpd_pm=0.0;
     float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
     float tmin_tomorrow;
@@ -1210,9 +1208,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     ndep = -9999.9;
     wind_sp = 3.0; /* Haverd et al. 2012 */
     atpress = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
-    wind_am = wind_sp;
-    wind_pm = wind_sp;
-
 
     for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
         yr_to_get = k;
@@ -1319,10 +1314,10 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             rainfall = rain_ij[kk];
 
             fprintf(ofp,
-            "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
+            "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
              year, doy_cnt+1, sw, Tmean, rainfall, Tsoil, Tam, Tpm, vpd_am,
-             vpd_pm, vpd_avg, co2, ndep, wind_sp, atpress, par_day, wind_am,
-             wind_pm, sw_am, sw_pm);
+             vpd_pm, vpd_avg, co2, ndep, wind_sp, atpress, par_day,
+             sw_am, sw_pm);
 
             doy_cnt++;
             jj++;

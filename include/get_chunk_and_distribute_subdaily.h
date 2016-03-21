@@ -12,7 +12,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-
 #define STRING_LENGTH 2000
 #define TRUE 1
 #define FALSE 0
@@ -87,13 +86,15 @@ void   get_data(control *, char *, int, float **, int **, int *);
 int    distribute_ij(control *, int *, int **);
 int    distribute(control *, int *, float *, float **, int, int);
 void   build_radiation_clim(control *, int *, float *, float **, float **);
-void write_spinup_file(int, int, control *, met *, float *, float *,
+void   write_spinup_file(int, int, control *, met *, float *, float *,
                        float *, float *, float *, float *, float *);
-void write_forcing_file(int, int, control *, met *, float *, float *,
-                        float *, float *, float *, float *, float *, float *);
-
-
-
+void   write_forcing_file(int, int, control *, met *, float *, float *,
+                          float *, float *, float *, float *, float *, float *);
+void   estimate_dirunal_par(float, int, float, float *, float *);
+void   disaggregate_rainfall(float, float *rain);
+void   estimate_diurnal_temp(float, float, float, float *);
+void   estimate_diurnal_vpd(float, float, float, float, float *);
+int    rand_int(unsigned int, unsigned int);
 float  calc_day_length(int, int, float);
 void   calc_tam_tpm(float *, float *, float, float, float, float);
 float  calc_vpd(float, float);

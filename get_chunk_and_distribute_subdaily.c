@@ -1162,10 +1162,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
-                fprintf(ofp,
-                    "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
-                    year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod], tsoil,
-                    vpd, co2, ndep, wind, press);
+                fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n"
+                        year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
+                        tsoil, vpd, co2, ndep, wind, press);
             }
             doy_cnt++;
         }
@@ -1189,7 +1188,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     FILE *ofp;
 
     long date_offset;
-    int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
+    int k=0, kk, jj, hod, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year;
+    int st_idx_rad;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
     float Tmean=0.0, tsoil=0.0, vpd=0.0;
     float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
@@ -1339,10 +1339,9 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
-                fprintf(ofp,
-                    "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
-                    year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod], tsoil,
-                    vpd, co2, ndep, wind, press);
+                fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n"
+                        year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
+                        tsoil, vpd, co2, ndep, wind, press);
             }
 
 
@@ -1650,7 +1649,6 @@ void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
     float solar_constant, rlat, ryear, rdec, dec, hour_angle, rhlf_day_length;
     float solar_norm, solar_frac_obs, hour, time_noon, rtime;
     float sec_2_day = 86400.0;
-    float day_2_hour = 1.0 / 24.0;
     float SW_2_PAR = 2.3;
 
     /* Solar constant [MJ/m2/day] */
@@ -1684,7 +1682,7 @@ void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
     }
 
     /* hrs */
-    *day_length = 24.0 * 2.0 * rhlf_day_length / (2.0 * M_PI)
+    *day_length = 24.0 * 2.0 * rhlf_day_length / (2.0 * M_PI);
 
     /*
     ** Daily solar irradiance without atmosphere, normalised by solar constant,
@@ -1699,8 +1697,6 @@ void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
     ** (should be < 1), sw_rad (MJ m-2 d-1)
     */
     solar_frac_obs = sw_rad_day / (solar_norm * solar_constant + 1.0E-6);
-
-    sw_rad = np.zeros(48)
 
     for (i = 1; i < ntimesteps+1; i++) {
 

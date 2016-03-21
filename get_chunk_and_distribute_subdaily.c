@@ -1036,10 +1036,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float vpd=0.0, par_day=0.0, sw_am=0.0, tsoil=0.0;
+    float vpd=0.0, tsoil=0.0;
     float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float Tam, Tpm, SEC_TO_DAY;
     float vph[48], rain[48], tair[48], par[48];
 
     /*
@@ -1125,7 +1124,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_clim_leap_ij[doy_cnt];
 
-            estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
+            estimate_dirunal_par(latitude, doy_cnt+1, sw, &(par[0]),
+                                 &day_length);
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
             disaggregate_rainfall(rain_ij[kk], &(rain[0]));
@@ -1172,10 +1172,9 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     int k=0, kk, jj, hod, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year;
     int st_idx_rad;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float Tmean=0.0, tsoil=0.0, vpd=0.0;
+    float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float Tam, Tpm, SEC_TO_DAY;
     float vph[48], rain[48], tair[48], par[48];
     float SW_2_PAR = 2.3;
     sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
@@ -1269,7 +1268,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_ij[jj];
 
-            estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
+            estimate_dirunal_par(latitude, doy_cnt+1, sw, &(par[0]),
+                                 &day_length);
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
             disaggregate_rainfall(rain_ij[kk], &(rain[0]));

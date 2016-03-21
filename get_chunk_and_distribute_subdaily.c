@@ -1664,10 +1664,10 @@ void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
     rdec = 0.006918 - 0.399912 * cos(ryear) + 0.070257 * \
             sin(ryear) - 0.006758 * cos(2.0 * ryear) + \
             0.000907 * sin(2.0 * ryear) - 0.002697 * \
-            np.cos(3.0  * ryear) + 0.001480 * sin(3.0 * ryear);
+            cos(3.0  * ryear) + 0.001480 * sin(3.0 * ryear);
 
     /* Declination in degrees */
-    dec = (180.0 / np.pi) * rdec;
+    dec = (180.0 / M_PI) * rdec;
 
     hour_angle = -tan(rlat) * tan(rdec);
 
@@ -1680,7 +1680,7 @@ void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
     } else if (hour_angle >= 1.0) {
         rhlf_day_length = 0.0;               /* polar winter: sun never rises */
     } else {
-        rhlf_day_length = arccos(hour_angle);
+        rhlf_day_length = acos(hour_angle);
     }
 
     /* hrs */

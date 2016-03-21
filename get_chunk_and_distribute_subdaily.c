@@ -1037,12 +1037,10 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
     float vpd=0.0, par_day=0.0, sw_am=0.0, tsoil=0.0;
-    float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
+    float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float Tam, Tpm, SEC_TO_DAY, sw_w_m2;
-    float MJ_TO_J = 1.0 / 1.0E-6;
-    float J_TO_UMOL = 4.6;
-    float *vph, *rain, *tair, *par;
+    float Tam, Tpm, SEC_TO_DAY;
+    float vph[48], rain[48], tair[48], par[48];
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1080,25 +1078,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
-    if ((vph = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal vph array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((rain = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal rain array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((tair = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal tair array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((par = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal par array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
 
     for (k = 0; k < len_shuffled_yrs; k++) {
         yr_to_get = shuffled_yrs[k];
@@ -1147,10 +1126,11 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                 sw = rad_clim_leap_ij[doy_cnt];
 
             estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
-            estimate_diurnal_vph(vph09, vph15_ij[kk], vph09_tomorrow,
-                                 vph15_yesterday, &vph);
-            disaggregate_rainfall(rain_ij[kk], &rain);
-            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length, &tair);
+            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
+                                 vph15_yesterday, &(vph[0]));
+            disaggregate_rainfall(rain_ij[kk], &(rain[0]));
+            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
+                                  &(tair[0]));
 
             tsoil = 0.0;
             for (hod = 0; hod < 48; hod++) {
@@ -1172,11 +1152,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     }
     fclose(ofp);
 
-    free(vph);
-    free(rain);
-    free(tair);
-    free(par);
-    
+
     return;
 }
 
@@ -1197,12 +1173,10 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     int st_idx_rad;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
     float Tmean=0.0, tsoil=0.0, vpd=0.0;
-    float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
+    float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float Tam, Tpm, SEC_TO_DAY, Tavg, sw_w_m2;
-    float *vph, *rain, *tair, *par;
-    float MJ_TO_J = 1.0 / 1.0E-6;
-    float J_TO_UMOL = 4.6;
+    float Tam, Tpm, SEC_TO_DAY;
+    float vph[48], rain[48], tair[48], par[48];
     float SW_2_PAR = 2.3;
     sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
 
@@ -1223,25 +1197,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
-    if ((vph = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal vph array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((rain = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal rain array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((tair = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal tair array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    if ((par = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal par array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
-    }
 
     co2 = 285.0;
     ndep = -9999.9;
@@ -1315,10 +1270,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 sw = rad_ij[jj];
 
             estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
-            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vpd09_tomorrow,
-                                 vph15_yesterday, &vph);
-            disaggregate_rainfall(rain_ij[kk], &rain);
-            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length, &tair);
+            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
+                                 vph15_yesterday, &(vph[0]));
+            disaggregate_rainfall(rain_ij[kk], &(rain[0]));
+            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
+                                  &(tair[0]));
+
 
             tsoil = 0.0;
             for (hod = 0; hod < 48; hod++) {
@@ -1358,10 +1315,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     fclose(ofp);
 
-    free(vph);
-    free(rain);
-    free(tair);
-    free(par);
     return;
 }
 

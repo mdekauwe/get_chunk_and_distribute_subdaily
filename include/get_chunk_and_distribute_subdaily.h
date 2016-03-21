@@ -93,7 +93,7 @@ void   write_forcing_file(int, int, control *, met *, float *, float *,
 void   estimate_dirunal_par(float, int, float, float *, float *);
 void   disaggregate_rainfall(float, float *rain);
 void   estimate_diurnal_temp(float, float, float, float *);
-void   estimate_diurnal_vpd(float, float, float, float, float *);
+void   estimate_diurnal_vph(float, float, float, float, float *);
 int    rand_int(unsigned int, unsigned int);
 float  calc_day_length(int, int, float);
 void   calc_tam_tpm(float *, float *, float, float, float, float);

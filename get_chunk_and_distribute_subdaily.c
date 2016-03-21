@@ -1036,14 +1036,14 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float vpd_avg=0.0, par_day=0.0, sw_am=0.0;
+    float vpd=0.0, par_day=0.0, sw_am=0.0;
     float tsoil=0.0,
     float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
-    float tmin_tomorrow, vpd09_tomorrow, vpd15_yesterday;
+    float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
     float Tam, Tpm, SEC_TO_DAY, sw_w_m2;
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
-    float *vpd, *rain, *tair;
+    float *vph, *rain, *tair;
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1081,8 +1081,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
-    if ((vpd = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal vpd array\n");
+    if ((vph = (float *)calloc(48, sizeof(float))) == NULL) {
+        fprintf(stderr,"Error allocating space for sub-diurnal vph array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
@@ -1123,16 +1123,16 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             if (kk+1 > en_idx) {
                 tmin_tomorrow = tmin_ij[kk];
-                vpd09_tomorrow = vph09_ij[kk];
+                vph09_tomorrow = vph09_ij[kk];
             } else {
                 tmin_tomorrow = tmin_ij[kk+1];
-                vpd09_tomorrow = vph09_ij[kk+1];
+                vph09_tomorrow = vph09_ij[kk+1];
             }
 
             if (kk == st_idx) {
-                vpd15_yesterday = vph15_ij[kk];
+                vph15_yesterday = vph15_ij[kk];
             } else {
-                vpd15_yesterday = vph15_ij[kk-1];
+                vph15_yesterday = vph15_ij[kk-1];
             }
 
 
@@ -1143,8 +1143,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                 sw = rad_clim_leap_ij[doy_cnt];
 
             estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
-            estimate_diurnal_vpd(vph09_ij[kk], vph15_ij[kk], vpd09_tomorrow,
-                                 vpd15_yesterday, &vpd);
+            estimate_diurnal_vph(vph09, vph15_ij[kk], vph09_tomorrow,
+                                 vph15_yesterday, &vph);
             disaggregate_rainfall(rain_ij[kk], &rain);
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length, &tair);
 
@@ -1156,10 +1156,12 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             for (hod = 0; hod < 48; hod++) {
 
+                vpd = calc_vpd(tair[hod], vph[hod]);
+
                 fprintf(ofp,
                     "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                     year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod], tsoil,
-                    vpd[hod], co2, ndep, wind, press);
+                    vpd, co2, ndep, wind, press);
             }
             doy_cnt++;
         }
@@ -1185,11 +1187,11 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     long date_offset;
     int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float Tmean=0.0, tsoil=0.0, vpd_am=0.0, vpd_pm=0.0;
+    float Tmean=0.0, tsoil=0.0, vpd=0.0;
     float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
-    float tmin_tomorrow;
+    float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
     float Tam, Tpm, SEC_TO_DAY, Tavg, sw_w_m2;
-    float *vpd, *rain, *tair;
+    float *vph, *rain, *tair;
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_2_PAR = 2.3;
@@ -1212,8 +1214,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
-    if ((vpd = (float *)calloc(48, sizeof(float))) == NULL) {
-        fprintf(stderr,"Error allocating space for sub-diurnal vpd array\n");
+    if ((vph = (float *)calloc(48, sizeof(float))) == NULL) {
+        fprintf(stderr,"Error allocating space for sub-diurnal vph array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
@@ -1277,16 +1279,16 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             if (kk+1 > en_idx) {
                 tmin_tomorrow = tmin_ij[kk];
-                vpd09_tomorrow = vph09_ij[kk];
+                vph09_tomorrow = vph09_ij[kk];
             } else {
                 tmin_tomorrow = tmin_ij[kk+1];
-                vpd09_tomorrow = vph09_ij[kk+1];
+                vph09_tomorrow = vph09_ij[kk+1];
             }
 
             if (kk == st_idx) {
                 vpd15_yesterday = vph15_ij[kk];
             } else {
-                vpd15_yesterday = vph15_ij[kk-1];
+                vph15_yesterday = vph15_ij[kk-1];
             }
 
 
@@ -1299,8 +1301,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 sw = rad_ij[jj];
 
             estimate_dirunal_par(latitude, doy_cnt+1, sw, &par, &day_length);
-            estimate_diurnal_vpd(vph09_ij[kk], vph15_ij[kk], vpd09_tomorrow,
-                                 vpd15_yesterday, &vpd);
+            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vpd09_tomorrow,
+                                 vpd15_yesterday, &vph);
             disaggregate_rainfall(rain_ij[kk], &rain);
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length, &tair);
 
@@ -1326,11 +1328,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                     par[hod] = rad_clim_leap_ij[doy_cnt] * SW_2_PAR;
                 }
 
+                vpd = calc_vpd(tair[hod], vph[hod]);
 
                 fprintf(ofp,
                     "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                     year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod], tsoil,
-                    vpd[hod], co2, ndep, wind, press);
+                    vpd, co2, ndep, wind, press);
             }
 
 
@@ -1468,10 +1471,10 @@ int is_leap_year(int yr) {
     }
 }
 
-void estimate_diurnal_vpd(float vpd09, float vpd15, float vpd09_next,
-                          float vpd15_prev, float *vpd) {
+void estimate_diurnal_vph(float vph09, float vpd15, float vph09_next,
+                          float vph15_prev, float *vph) {
     /*
-    Interpolate VPD between 9am and 3pm values to generate diurnal VPD
+    Interpolate VPH between 9am and 3pm values to generate diurnal VPD
     following the method of Haverd et al. This seems reasonable, vapour pressure
     plotted aginst time of day often does not reveal consistent patterns, with
     small fluctuations (see Kimball and Bellamy, 1986).
@@ -1488,16 +1491,16 @@ void estimate_diurnal_vpd(float vpd09, float vpd15, float vpd09_next,
 
     for (i = 0; i < ntimesteps; i++) {
         /* first zero values */
-        *(vpd+i) = 0.0;
+        *(vph+i) = 0.0;
 
         hour = float(i) / 2.0;
 
         if (hour <= 9.0) {
-           *(vpd+i) = vpd15_prev + (vpd09 - vpd15_prev) * (9.0 + hour) / gap;
+           *(vph+i) = vph15_prev + (vph09 - vph15_prev) * (9.0 + hour) / gap;
         } else if (hour > 9.0 and hour <= 15.0) {
-           *(vpd+i) = vpd09 + (vpd15 - vpd09) * (hour - 9.0) / (15.0 - 9.0);
+           *(vph+i) = vph09 + (vph15 - vph09) * (hour - 9.0) / (15.0 - 9.0);
         } else if (hour > 15.0) {
-            *(vpd+i) =  vpd15 + (vpd09_next - vpd15) * (hour - 15.0) / gap;
+            *(vph+i) =  vph15 + (vph09_next - vph15) * (hour - 15.0) / gap;
         }
 
     return;

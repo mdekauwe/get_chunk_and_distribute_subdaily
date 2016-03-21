@@ -1459,18 +1459,18 @@ void estimate_diurnal_vph(float vph09, float vph15, float vph09_next,
     double hour;
     int    i, ntimesteps = 48;
 
-    for (i = 0; i < ntimesteps; i++) {
+    for (i = 1; i < ntimesteps+1; i++) {
         /* first zero values */
         *(vph+i) = 0.0;
 
         hour = (float)i / 2.0;
 
         if (hour <= 9.0) {
-           *(vph+i) = vph15_prev + (vph09 - vph15_prev) * (9.0 + hour) / gap;
+           *(vph+(i-1)) = vph15_prev + (vph09 - vph15_prev) * (9.0 + hour) / gap;
        } else if (hour > 9.0 && hour <= 15.0) {
-           *(vph+i) = vph09 + (vph15 - vph09) * (hour - 9.0) / (15.0 - 9.0);
+           *(vph+(i-1)) = vph09 + (vph15 - vph09) * (hour - 9.0) / (15.0 - 9.0);
         } else if (hour > 15.0) {
-            *(vph+i) =  vph15 + (vph09_next - vph15) * (hour - 15.0) / gap;
+            *(vph+(i-1)) =  vph15 + (vph09_next - vph15) * (hour - 15.0) / gap;
         }
     }
 
@@ -1573,14 +1573,14 @@ void estimate_diurnal_temp(float tmin, float tmax, float day_length,
     tset = (tmax - tmin) * sin(M_PI * m / (day_length + 2.0 * a)) + tmin;
 
 
-    for (i = 0; i < ntimesteps; i++) {
+    for (i = 1; i < ntimesteps+1; i++) {
 
         hour = (float)i / 2.0;
 
         /* hour - time of the minimum temperature (accounting for lag time) */
         m = hour - sunrise + c;
         if (hour >= sunrise && hour <= sunset) {
-            *(tair+i) = tmin + (tmax - tmin) * \
+            *(tair+(i-1)) = tmin + (tmax - tmin) * \
                         sin((M_PI * m) / (day_length + 2.0 * a));
         } else {
             if (hour > sunset) {
@@ -1595,7 +1595,7 @@ void estimate_diurnal_temp(float tmin, float tmax, float day_length,
             ** removes a discontinuity in the original Parton and Logan eqn.
             ** See Kimball and Bellamy (1986) Energy in Agriculture, 5, 185-197
             **/
-            *(tair+i) = (tmin -d) + (tset - tmin - d) * \
+            *(tair+(i-1)) = (tmin -d) + (tset - tmin - d) * \
                         exp(-b * n / (night_length + c));
         }
     }

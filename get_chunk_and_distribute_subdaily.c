@@ -786,7 +786,7 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
     /*
         Divide the total number of land pixels between the various processors.
 
-        Return the number of pairs (i,j). Note the number of pairs is double
+        Return the number of pairs (i,j). Note the number of pairs is float
         the number of c->num_land_pixels / num processors, because we are
         dividing up land_ij which for contains both the i + j pair.
     */
@@ -1102,6 +1102,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         doy_cnt = 0;
         for (kk = st_idx; kk < en_idx; kk++) {
             /*printf("**%d %d\n", st_idx, en_idx);*/
+            day_length = calc_day_length(kk, ndays, latitude);
 
             if (kk+1 > en_idx) {
                 tmin_tomorrow = tmin_ij[kk];
@@ -1124,8 +1125,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_clim_leap_ij[doy_cnt];
 
-            estimate_dirunal_par(latitude, doy_cnt+1, sw, &(par[0]),
-                                 &day_length);
+            estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
             disaggregate_rainfall(rain_ij[kk], &(rain[0]));
@@ -1243,7 +1243,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         jj = st_idx_rad;
         for (kk = st_idx; kk < en_idx; kk++) {
             /*printf("%d/%d/%d\n", years[kk], months[kk], days[kk]);*/
-
+            day_length = calc_day_length(kk, ndays, latitude);
 
             if (kk+1 > en_idx) {
                 tmin_tomorrow = tmin_ij[kk];
@@ -1268,8 +1268,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_ij[jj];
 
-            estimate_dirunal_par(latitude, doy_cnt+1, sw, &(par[0]),
-                                 &day_length);
+            estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
             disaggregate_rainfall(rain_ij[kk], &(rain[0]));
@@ -1455,8 +1454,8 @@ void estimate_diurnal_vph(float vph09, float vph15, float vph09_next,
       2011-2040.
     */
     /* number of hours gap, i.e. 3pm to 9am the next day */
-    double gap = 18.0;
-    double hour;
+    float gap = 18.0;
+    float hour;
     int    i, ntimesteps = 48;
 
     for (i = 1; i < ntimesteps+1; i++) {
@@ -1604,92 +1603,368 @@ void estimate_diurnal_temp(float tmin, float tmax, float day_length,
 }
 
 
-void estimate_dirunal_par(float lat, int doy, float sw_rad_day, float *par,
-                          float *day_length) {
-
+void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
+                          float *par) {
+    /*
+        Calculate daily course of incident PAR from daily totals using routine
+        from MAESTRA
+    */
     int   i, ntimesteps = 48;
-    float solar_constant, rlat, ryear, rdec, dec, hour_angle, rhlf_day_length;
-    float solar_norm, solar_frac_obs, hour, time_noon, rtime;
-    float sec_2_day = 86400.0;
     float SW_2_PAR = 2.3;
-
-    /* Solar constant [MJ/m2/day] */
-    solar_constant = 1370.0 * sec_2_day / 1E6;
-
-    /* convert to radians */
-    rlat  = lat * M_PI / 180.0;
-    ryear = 2.0 * M_PI * (doy - 1.0) / 365.0;
-
-    /* Declination in radians (Paltridge and Platt eq [3.7]) */
-    rdec = 0.006918 - 0.399912 * cos(ryear) + 0.070257 * \
-            sin(ryear) - 0.006758 * cos(2.0 * ryear) + \
-            0.000907 * sin(2.0 * ryear) - 0.002697 * \
-            cos(3.0  * ryear) + 0.001480 * sin(3.0 * ryear);
-
-    /* Declination in degrees */
-    dec = (180.0 / M_PI) * rdec;
-
-    hour_angle = -tan(rlat) * tan(rdec);
-
+    float cos_zenith[ntimesteps];
+    float UMOLPERJ = 4.57;      /* Conversion from J to umol quanta */
+    float tau = 0.76;            /* Transmissivity of atmosphere */
+    float direct_frac, diffuse_frac;
+    float MJ_TO_J = 1E6;
+    float SEC_2_DAY = 86400.0;
+    float DAY_2_SEC = 1.0 / SEC_2_DAY;
+    float cos_bm[ntimesteps], cos_df[ntimesteps], sum_bm, sum_df, hrtime;
+    float zenith, rddf, rdbm, par_day;
     /*
-    ** Half Day Length (radians), (dawn:noon = noon:dusk)
-    ** Paltridge and Platt eq [3.21]
+    ** MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> MJ m-2 d-1
+    ** all the other units conv cancel.
     */
-    if (hour_angle <= -1.0) {
-        rhlf_day_length = M_PI;              /* polar summer: sun never sets */
-    } else if (hour_angle >= 1.0) {
-        rhlf_day_length = 0.0;               /* polar winter: sun never rises */
-    } else {
-        rhlf_day_length = acos(hour_angle);
-    }
+    par_day = sw_rad_day * SW_2_PAR / UMOLPERJ;
+    calculate_solar_geometry(doy, lat, lon, &(cos_zenith[0]));
+    diffuse_frac = spitters(doy, par_day, cos_zenith);
+    direct_frac = 1.0 - diffuse_frac;
 
-    /* hrs */
-    *day_length = 24.0 * 2.0 * rhlf_day_length / (2.0 * M_PI);
-
-    /*
-    ** Daily solar irradiance without atmosphere, normalised by solar constant,
-    ** with both energy fluxes in MJ/m2/day, calculated from solar geometry
-    ** Paltridge and Platt eq [3.22]
-    */
-    solar_norm = (rhlf_day_length * sin(rlat) * sin(rdec) +
-                  cos(rlat) * cos(rdec) * sin(rhlf_day_length)) / M_PI;
-
-    /*
-    ** Observed daily solar irradiance as frac of value from solar geometry
-    ** (should be < 1), sw_rad (MJ m-2 d-1)
-    */
-    solar_frac_obs = sw_rad_day / (solar_norm * solar_constant + 1.0E-6);
-
+    sum_bm = 0.0;
+    sum_df = 0.0;
     for (i = 1; i < ntimesteps+1; i++) {
 
-        hour = (float)i / 2.0;
+        hrtime = (float)i - 0.5;
 
-        /* Time in day frac (-0.5 to 0.5, zero at noon) */
-        time_noon = hour / 24.0 - 0.5;
+        if (cos_zenith[i-1] > 0.0) {
+            zenith = acos(cos_zenith[i-1]);
 
-        /* Time in day frac (-Pi to Pi, zero at noon) */
-        rtime = 2.0 * M_PI * time_noon;
-
-        /* day: sun is up */
-        if (fabs(rtime) < rhlf_day_length) {
-            /* Paltridge and Platt eq [3.4] */
-            *(par+(i-1)) = (sw_rad_day / solar_norm) * (sin(rdec) * \
-                               sin(rlat) + cos(rdec) * cos(rlat) * \
-                               cos(rtime));
-
-            /*
-            ** Need to half rad, as we are doing this over 48 timesteps and not
-            ** 24, otherwise we will end up with a total which is double
-            ** the sw_rad_tot
-            */
-            *(par+(i-1)) /= 2.0;
-
-            /* Convert sw_rad (MJ/m2/day to W/m2) to PAR (umol m-2 s-1) */
-            *(par+(i-1)) *= 1E6 / sec_2_day * SW_2_PAR;
-        } else {
-            *(par+(i-1)) = 0.0;
+            /* set FBM = 0.0 for ZEN > 80 degrees */
+            if (zenith < (80.0 * M_PI / 180.0)) {
+                cos_bm[i-1] = cos_zenith[i-1] * \
+                                pow(tau, (1.0 / cos_zenith[i-1]));
+            } else {
+                cos_bm[i-1] = 0.0;
+            }
+            cos_df[i-1] = cos_zenith[i-1];
+            sum_bm += cos_bm[i-1];
+            sum_df += cos_df[i-1];
         }
     }
 
+    for (i = 1; i < ntimesteps+1; i++) {
+
+        if (sum_bm > 0.0) {
+            rdbm = par_day * direct_frac * cos_bm[i-1] / sum_bm;
+        } else {
+            rdbm = 0.0;
+        }
+
+        if (sum_df > 0.0) {
+            rddf = par_day * diffuse_frac * cos_df[i-1] / sum_df;
+        } else {
+            rddf = 0.0;
+        }
+
+        /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
+        *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * DAY_2_SEC * UMOLPERJ;
+    }
+
     return;
+}
+
+void calculate_solar_geometry(int doy, float latitude, float longitude,
+                              float *cos_zenith) {
+    /*
+    The solar zenith angle is the angle between the zenith and the centre
+    of the sun's disc. The solar elevation angle is the altitude of the
+    sun, the angle between the horizon and the centre of the sun's disc.
+    Since these two angles are complementary, the cosine of either one of
+    them equals the sine of the other, i.e. cos theta = sin beta. I will
+    use cos_zen throughout code for simplicity.
+
+    Arguments:
+    ----------
+    doy : float
+        day of year
+    latitude : float
+        latitude (degrees)
+    longitude : float
+        longitude (degrees)
+
+    References:
+    -----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    */
+    int   i, ntimesteps = 48;
+    float dec, et, t0, h, gamma, rlat, sin_beta;
+    float hod;
+
+    for (i = 1; i < ntimesteps+1; i++) {
+
+        /* need to convert 30 min data, 0-47 to 0-23.5 */
+        hod = i / 2.0;
+
+        gamma = day_angle(doy);
+        dec = calculate_solar_declination(doy, gamma);
+        et = calculate_eqn_of_time(gamma);
+        t0 = calculate_solar_noon(et, longitude);
+        h = calculate_hour_angle(hod, t0);
+        rlat = latitude * M_PI / 180.0;
+
+        /* A13 - De Pury & Farquhar */
+        sin_beta = sin(rlat) * sin(dec) + cos(rlat) * cos(dec) * cos(h);
+
+        if (*(cos_zenith+(i-1)) > 1.0) {
+            *(cos_zenith+(i-1)) = 1.0;
+        } else if (cos_zenith[i-1] < 0.0) {
+            *(cos_zenith+(i-1)) = 0.0;
+        }
+        /*zenith = 180.0 / M_PI * acos(cos_zenith[i-1]);
+        elevation = 90.0 - zenith;*/
+    }
+    return;
+}
+
+float day_angle(int doy) {
+    /* Calculation of day angle - De Pury & Farquhar, '97: eqn A18
+
+    Reference:
+    ----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    * J. W. Spencer (1971). Fourier series representation of the position of
+      the sun.
+
+    Returns:
+    ---------
+    gamma - day angle in radians.
+    */
+
+    return (2.0 * M_PI * (doy - 1.0) / 365.0);
+}
+
+float calculate_solar_declination(int doy, float gamma) {
+    /*
+    Solar Declination Angle is a function of day of year and is indepenent
+    of location, varying between 23deg45' to -23deg45'
+
+    Arguments:
+    ----------
+    doy : int
+        day of year, 1=jan 1
+    gamma : float
+        fractional year (radians)
+
+    Returns:
+    --------
+    dec: float
+        Solar Declination Angle [radians]
+
+    Reference:
+    ----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    * Leuning et al (1995) Plant, Cell and Environment, 18, 1183-1200.
+    * J. W. Spencer (1971). Fourier series representation of the position of
+      the sun.
+    */
+    float decl;
+
+    /* declination (radians) */
+    /*decl = 0.006918 - 0.399912 * cos(gamma) + 0.070257 * sin(gamma) - \
+           0.006758 * cos(2.0 * gamma) + 0.000907 * sin(2.0 * gamma) -\
+           0.002697 * cos(3.0 * gamma) + 0.00148 * sin(3.0 * gamma);*/
+
+
+    /* (radians) A14 - De Pury & Farquhar  */
+    decl = -23.4 * (M_PI / 180.) * cos(2.0 * M_PI * (doy + 10) / 365);
+
+    return (decl);
+
+}
+
+float calculate_eqn_of_time(float gamma) {
+    /* Equation of time - correction for the difference btw solar time
+    and the clock time.
+
+    Arguments:
+    ----------
+    doy : int
+        day of year
+    gamma : float
+        fractional year (radians)
+
+    References:
+    -----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+    * Campbell, G. S. and Norman, J. M. (1998) Introduction to environmental
+      biophysics. Pg 169.
+    * J. W. Spencer (1971). Fourier series representation of the position of
+      the sun.
+    * Hughes, David W.; Yallop, B. D.; Hohenkerk, C. Y. (1989),
+      "The Equation of Time", Monthly Notices of the Royal Astronomical
+      Society 238: 1529–1535
+    */
+    float et;
+
+    /* radians */
+    /*et = 0.000075 + 0.001868 * cos(gamma) - 0.032077 * sin(gamma) -\
+         0.014615 * cos(2.0 * gamma) - 0.04089 * sin(2.0 * gamma);*/
+
+    /* radians to minutes */
+    /*et *= 229.18; */
+
+    /* radians to hours */
+    /*et *= 24.0 / (2.0 * M_PI);*/
+
+    /* minutes - de Pury and Farquhar, 1997 - A17 */
+    et = (0.017 + 0.4281 * cos(gamma) - 7.351 * sin(gamma) - 3.349 *
+          cos(2.0 * gamma) - 9.731  * sin(gamma));
+
+    return (et);
+}
+
+float calculate_solar_noon(float et, float longitude) {
+    /* Calculation solar noon - De Pury & Farquhar, '97: eqn A16
+
+    Reference:
+    ----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+
+    Returns:
+    ---------
+    t0 - solar noon (hours).
+    */
+    float t0, Ls;
+
+    /* all international standard meridians are multiples of 15deg east/west of
+       greenwich */
+    Ls = round_to_value(longitude, 15.);
+    t0 = 12.0 + (4.0 * (Ls - longitude) - et) / 60.0;
+
+    return (t0);
+}
+
+float calculate_hour_angle(float t, float t0) {
+    /* Calculation solar noon - De Pury & Farquhar, '97: eqn A15
+
+    Reference:
+    ----------
+    * De Pury & Farquhar (1997) PCE, 20, 537-557.
+
+    Returns:
+    ---------
+    h - hour angle (radians).
+    */
+    return (M_PI * (t - t0) / 12.0);
+
+}
+
+
+float spitters(int doy, float par, float *cos_zenith) {
+    /*
+    Spitters algorithm to estimate the diffuse component from the total daily
+    incident radiation.
+
+    NB. Eqns. 2a-d, not 20a-d
+
+    Parameters:
+    ----------
+    doy : int
+        day of year
+    par : float
+        daily total photosynthetically active radiation (MJ m-2 d-1)
+    cos_zenith : float
+        cosine of zenith angle (radians)
+
+    Returns:
+    -------
+    diffuse : float
+        diffuse component of incoming radiation
+
+    References:
+    ----------
+    * Spitters, C. J. T., Toussaint, H. A. J. M. and Goudriaan, J. (1986)
+      Separating the diffuse and direct component of global radiation and its
+      implications for modeling canopy photosynthesis. Part I. Components of
+      incoming radiation. Agricultural Forest Meteorol., 38:217-229.
+    */
+
+    /* Fraction of global radiation that is PAR */
+    float fpar = 0.5;
+    float SEC_2_HFHR = 1800.0;
+    float J_TO_MJ = 1E-6;
+    float CONV = SEC_2_HFHR * J_TO_MJ;
+    float S0, tau, diffuse_frac;
+    int   i, ntimesteps = 48;
+
+
+    /* Calculate extra-terrestrial radiation */
+    S0 = 0.0;
+    for (i = 1; i < ntimesteps+1; i++) {
+        S0 += calc_extra_terrestrial_rad(doy, *(cos_zenith+(i-1))) * CONV;
+    }
+
+    /* atmospheric transmisivity */
+    tau = (par * fpar) / S0;
+
+    /* Spitter's formula (Eqns. 2a-d) */
+    if (tau < 0.07) {
+        diffuse_frac = 1.0;
+    } else if (tau < 0.35) {
+        diffuse_frac = 1.0 - 2.3 * (tau - 0.07) * (tau - 0.07);
+    } else if (tau < 0.75) {
+        diffuse_frac = 1.33 - 1.46 * tau;
+    } else {
+        diffuse_frac = 0.23;
+    }
+
+    return (diffuse_frac);
+}
+
+float calc_extra_terrestrial_rad(int doy, float cos_zenith) {
+    /* Solar radiation incident outside the earth's atmosphere, e.g.
+    extra-terrestrial radiation. The value varies a little with the earths
+    orbit.
+
+    Using formula from Spitters not Leuning!
+
+    Arguments:
+    ----------
+    doy : double
+        day of year
+    cos_zenith : double
+        cosine of zenith angle (radians)
+
+    Returns:
+    --------
+    So : float
+        solar radiation normal to the sun's bean outside the Earth's atmosphere
+        (J m-2 s-1)
+
+    Reference:
+    ----------
+    * Spitters et al. (1986) AFM, 38, 217-229, equation 1.
+    */
+
+    float So, Sc;
+
+    /* Solar constant (J m-2 s-1) */
+    Sc = 1370.0;
+
+    if (cos_zenith > 0.0) {
+        /*
+        ** remember sin_beta = cos_zenith; trig funcs are cofuncs of each other
+        ** sin(x) = cos(90-x) and cos(x) = sin(90-x).
+        */
+        So = Sc * (1.0 + 0.033 * cos((float)doy / 365.0 * 2.0 * M_PI)) *\
+                cos_zenith;
+    } else {
+        So = 0.0;
+    }
+
+    return (So);
+
+}
+
+float round_to_value(float number, float roundto) {
+    return (round(number / roundto) * roundto);
 }

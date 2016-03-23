@@ -1904,7 +1904,7 @@ float spitters(int doy, float par, float *cos_zenith) {
     }
 
     /* atmospheric transmisivity */
-    tau = (par * fpar) / S0;
+    tau = (par / fpar) / S0;
 
     /* Spitter's formula (Eqns. 2a-d) */
     if (tau < 0.07) {

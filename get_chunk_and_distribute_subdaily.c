@@ -1142,6 +1142,21 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
+                float MJ_TO_J = 1E6;
+                float SEC_2_DAY = 86400.0;
+                float DAY_2_SEC = 1.0 / SEC_2_DAY;
+                float SW_2_PAR = 2.3;
+                float J_TO_UMOL = 4.57;
+                float UMOL_TO_J = 1.0 / J_TO_UMOL;
+                float J_TO_MJ = 1E-6;
+                /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
+                float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
+                                UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
+
+
+
+                fprintf(ofp, "%f\n", par_day);
+                
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2, ndep, wind, press);
@@ -1300,6 +1315,20 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
+                float MJ_TO_J = 1E6;
+                float SEC_2_DAY = 86400.0;
+                float DAY_2_SEC = 1.0 / SEC_2_DAY;
+                float SW_2_PAR = 2.3;
+                float J_TO_UMOL = 4.57;
+                float UMOL_TO_J = 1.0 / J_TO_UMOL;
+                float J_TO_MJ = 1E-6;
+                /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
+                float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
+                                UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
+
+
+
+                fprintf(ofp, "%f\n", par_day);
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2, ndep, wind, press);
@@ -1612,26 +1641,27 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     int   i, ntimesteps = 48;
     float SW_2_PAR = 2.3;
     float cos_zenith[ntimesteps];
-    float UMOLPERJ = 4.57;      /* Conversion from J to umol quanta */
+    float J_TO_UMOL = 4.57;
+    float UMOL_TO_J = 1.0 / J_TO_UMOL;
     float tau = 0.76;            /* Transmissivity of atmosphere */
     float direct_frac, diffuse_frac;
     float MJ_TO_J = 1E6;
+    float J_TO_MJ = 1E-6;
     float SEC_2_DAY = 86400.0;
     float DAY_2_SEC = 1.0 / SEC_2_DAY;
     float cos_bm[ntimesteps], cos_df[ntimesteps], sum_bm, sum_df, hrtime;
     float zenith, rddf, rdbm, par_day;
-    /*
-    ** MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> MJ m-2 d-1
-    ** all the other units conv cancel.
-    */
-    par_day = sw_rad_day * SW_2_PAR / UMOLPERJ;
+    /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
+    par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
+              UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
+
     calculate_solar_geometry(doy, lat, lon, &(cos_zenith[0]));
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;
 
     sum_bm = 0.0;
     sum_df = 0.0;
-    for (i = 1; i < ntimesteps+1; i++) {
+    for (i=1; i < ntimesteps+1; i++) {
 
         hrtime = (float)i - 0.5;
 
@@ -1666,7 +1696,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         }
 
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
-        *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * DAY_2_SEC * UMOLPERJ;
+        *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
     }
 
     return;
@@ -1696,7 +1726,7 @@ void calculate_solar_geometry(int doy, float latitude, float longitude,
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
     */
     int   i, ntimesteps = 48;
-    float dec, et, t0, h, gamma, rlat, sin_beta;
+    float rdec, et, t0, h, gamma, rlat, sin_beta;
     float hod;
 
     for (i = 1; i < ntimesteps+1; i++) {
@@ -1705,14 +1735,14 @@ void calculate_solar_geometry(int doy, float latitude, float longitude,
         hod = i / 2.0;
 
         gamma = day_angle(doy);
-        dec = calculate_solar_declination(doy, gamma);
+        rdec = calculate_solar_declination(doy, gamma);
         et = calculate_eqn_of_time(gamma);
         t0 = calculate_solar_noon(et, longitude);
         h = calculate_hour_angle(hod, t0);
         rlat = latitude * M_PI / 180.0;
 
         /* A13 - De Pury & Farquhar */
-        sin_beta = sin(rlat) * sin(dec) + cos(rlat) * cos(dec) * cos(h);
+        sin_beta = sin(rlat) * sin(rdec) + cos(rlat) * cos(rdec) * cos(h);
 
         if (*(cos_zenith+(i-1)) > 1.0) {
             *(cos_zenith+(i-1)) = 1.0;
@@ -1739,7 +1769,7 @@ float day_angle(int doy) {
     gamma - day angle in radians.
     */
 
-    return (2.0 * M_PI * (doy - 1.0) / 365.0);
+    return (2.0 * M_PI * ((float)doy - 1.0) / 365.0);
 }
 
 float calculate_solar_declination(int doy, float gamma) {
@@ -1775,7 +1805,7 @@ float calculate_solar_declination(int doy, float gamma) {
 
 
     /* (radians) A14 - De Pury & Farquhar  */
-    decl = -23.4 * (M_PI / 180.) * cos(2.0 * M_PI * (doy + 10) / 365);
+    decl = -23.4 * (M_PI / 180.) * cos(2.0 * M_PI * ((float)doy + 10.) / 365.);
 
     return (decl);
 
@@ -1806,18 +1836,18 @@ float calculate_eqn_of_time(float gamma) {
     float et;
 
     /* radians */
-    /*et = 0.000075 + 0.001868 * cos(gamma) - 0.032077 * sin(gamma) -\
-         0.014615 * cos(2.0 * gamma) - 0.04089 * sin(2.0 * gamma);*/
+    et = 0.000075 + 0.001868 * cos(gamma) - 0.032077 * sin(gamma) -\
+         0.014615 * cos(2.0 * gamma) - 0.04089 * sin(2.0 * gamma);
 
     /* radians to minutes */
-    /*et *= 229.18; */
+    et *= 229.18;
 
     /* radians to hours */
     /*et *= 24.0 / (2.0 * M_PI);*/
 
     /* minutes - de Pury and Farquhar, 1997 - A17 */
-    et = (0.017 + 0.4281 * cos(gamma) - 7.351 * sin(gamma) - 3.349 *
-          cos(2.0 * gamma) - 9.731  * sin(gamma));
+    /*et = (0.017 + 0.4281 * cos(gamma) - 7.351 * sin(gamma) - 3.349 *
+          cos(2.0 * gamma) - 9.731  * sin(gamma));*/
 
     return (et);
 }

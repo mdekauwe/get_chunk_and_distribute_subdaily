@@ -1155,8 +1155,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
 
 
-                fprintf(ofp, "%f\n", par_day);
-                
+                printf("%d,%d, %f\n", year, doy_cnt+1, par_day);
+
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2, ndep, wind, press);

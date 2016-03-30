@@ -901,7 +901,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
                 /* Need to exclude -999 days in our climatology */
                 if (rad[date_offset2] >= 0.0) {
                     mar += rad[date_offset2];
-                mar_ndays++;
+                    mar_ndays++;
                 }
             } else if (month == 4) {
                 /* Need to exclude -999 days in our climatology */
@@ -949,7 +949,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
                 /* Need to exclude -999 days in our climatology */
                 if (rad[date_offset2] >= 0.0) {
                    nov += rad[date_offset2];
-                    nov_ndays++;
+                   nov_ndays++;
                 }
             } else if (month == 12) {
                 /* Need to exclude -999 days in our climatology */
@@ -1613,27 +1613,27 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     float tau = 0.76;            /* Transmissivity of atmosphere */
     float direct_frac, diffuse_frac;
     float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df, hrtime;
-    float zenith, rddf, rdbm, par_day;
+    float zenith, rddf, rdbm, par_day, beam_rad, diffuse_rad;
 
     /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
     par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
               UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
 
-    printf("%f %f %f\n", sw_rad_day, par_day, MJ_TO_J * DAY_2_SEC * SW_2_PAR * UMOL_TO_J * J_TO_MJ * SEC_2_DAY);
     calculate_solar_geometry(doy, lat, lon, &(cos_zenith[0]));
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;
 
-    /* zero stuff */
+    /* daily total beam PAR (MJ m-2 d-1) */
+    beam_rad = par_day * direct_frac;
+
+    /* daily total diffuse PAR (MJ m-2 d-1) */
+    diffuse_rad = par_day * diffuse_frac;
+
     sum_bm = 0.0;
     sum_df = 0.0;
     for (i = 1; i < NTIMESTEPS+1; i++) {
         cos_bm[i-1] = 0.0;
         cos_df[i-1] = 0.0;
-    }
-
-    for (i = 1; i < NTIMESTEPS+1; i++) {
-
         hrtime = (float)i - 0.5;
 
         if (cos_zenith[i-1] > 0.0) {
@@ -1649,24 +1649,23 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             cos_df[i-1] = cos_zenith[i-1];
             sum_bm += cos_bm[i-1];
             sum_df += cos_df[i-1];
-
         }
     }
 
     for (i = 1; i < NTIMESTEPS+1; i++) {
-        /* daily total beam PAR (MJ m-2 d-1) */
+
         if (sum_bm > 0.0) {
-            rdbm = par_day * direct_frac * cos_bm[i-1] / sum_bm;
+            rdbm = beam_rad * cos_bm[i-1] / sum_bm;
         } else {
             rdbm = 0.0;
         }
 
-        /* daily total diffuse PAR (MJ m-2 d-1) */
         if (sum_df > 0.0) {
-            rddf = par_day * diffuse_frac * cos_df[i-1] / sum_df;
+            rddf = diffuse_rad * cos_df[i-1] / sum_df;
         } else {
             rddf = 0.0;
         }
+        
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
         *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
     }

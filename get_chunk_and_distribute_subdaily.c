@@ -1631,9 +1631,14 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;
 
-
+    /* zero stuff */
     sum_bm = 0.0;
     sum_df = 0.0;
+    for (i = 1; i < NTIMESTEPS+1; i++) {
+        cos_bm[i-1] = 0.0;
+        cos_df[i-1] = 0.0;
+    }
+
     for (i = 1; i < NTIMESTEPS+1; i++) {
 
         hrtime = (float)i - 0.5;
@@ -1651,19 +1656,21 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             cos_df[i-1] = cos_zenith[i-1];
             sum_bm += cos_bm[i-1];
             sum_df += cos_df[i-1];
-            printf("%d %f %f %f\n\n", i, cos_zenith[i-1], zenith, zenith*180.0/M_PI);
+
         }
+        printf("%d %f %f %f\n", i, cos_zenith[i-1], zenith, zenith*180.0/M_PI);
     }
     printf("%f %f\n\n", sum_bm, sum_df);
 
     for (i = 1; i < NTIMESTEPS+1; i++) {
-
+        /* daily total beam PAR (MJ m-2 d-1) */
         if (sum_bm > 0.0) {
             rdbm = par_day * direct_frac * cos_bm[i-1] / sum_bm;
         } else {
             rdbm = 0.0;
         }
 
+        /* daily total diffuse PAR (MJ m-2 d-1) */
         if (sum_df > 0.0) {
             rddf = par_day * diffuse_frac * cos_df[i-1] / sum_df;
         } else {

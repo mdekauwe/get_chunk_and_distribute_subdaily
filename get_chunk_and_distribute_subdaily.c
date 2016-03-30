@@ -1631,7 +1631,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;
 
-    printf("%f %f %f\n\n", par_day, diffuse_frac, direct_frac);
+
     sum_bm = 0.0;
     sum_df = 0.0;
     for (i = 1; i < NTIMESTEPS+1; i++) {
@@ -1651,8 +1651,10 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             cos_df[i-1] = cos_zenith[i-1];
             sum_bm += cos_bm[i-1];
             sum_df += cos_df[i-1];
+            printf("%d %f\n\n", i, cos_zenith[i-1]);
         }
     }
+    printf("%f %f\n\n", sum_bm, sum_df);
 
     for (i = 1; i < NTIMESTEPS+1; i++) {
 
@@ -1667,11 +1669,11 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         } else {
             rddf = 0.0;
         }
-
+        printf("%d %f %f\n", i, rdbm, rddf);
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
         *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
 
-        printf("%d %f %f %f\n", i, (rddf + rdbm), (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC, (par+(i-1)));
+
     }
 
     exit(1);

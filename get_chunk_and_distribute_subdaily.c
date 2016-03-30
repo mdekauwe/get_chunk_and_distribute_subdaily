@@ -1651,7 +1651,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             cos_df[i-1] = cos_zenith[i-1];
             sum_bm += cos_bm[i-1];
             sum_df += cos_df[i-1];
-            printf("%d %f\n\n", i, cos_zenith[i-1]);
+            printf("%d %f %f %f\n\n", i, cos_zenith[i-1], zenith, zenith*180.0/M_PI);
         }
     }
     printf("%f %f\n\n", sum_bm, sum_df);

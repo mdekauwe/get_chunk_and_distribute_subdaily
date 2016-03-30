@@ -1721,7 +1721,8 @@ void calculate_solar_geometry(int doy, float latitude, float longitude,
 
         /* A13 - De Pury & Farquhar */
         sin_beta = sin(rlat) * sin(rdec) + cos(rlat) * cos(rdec) * cos(h);
-
+        /* The same thing, going to use throughout */
+        *(cos_zenith+(i-1)) = sin_beta;
         if (*(cos_zenith+(i-1)) > 1.0) {
             *(cos_zenith+(i-1)) = 1.0;
         } else if (cos_zenith[i-1] < 0.0) {

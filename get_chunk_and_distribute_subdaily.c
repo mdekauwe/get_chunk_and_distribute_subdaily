@@ -1138,20 +1138,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             }
             tsoil /= (float)NTIMESTEPS;
 
-            /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
-            float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
-                            UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
-
-
-            printf("%d %d: %d,%d, %f %f\n", i, j, year, doy_cnt+1, par_day, sw);
             for (hod = 0; hod < NTIMESTEPS; hod++) {
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
-
-
-
-
-
 
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
@@ -1633,6 +1622,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     float direct_frac, diffuse_frac;
     float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df, hrtime;
     float zenith, rddf, rdbm, par_day;
+
     /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
     par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
               UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
@@ -1641,6 +1631,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;
 
+    printf("%f %f %f\n\n", par_day, diffuse_frac, direct_frac);
     sum_bm = 0.0;
     sum_df = 0.0;
     for (i=1; i < NTIMESTEPS+1; i++) {
@@ -1679,8 +1670,11 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
 
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
         *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
+
+        printf("%d %f %f\n", i, (rddf + rdbm), (par+(i-1)));
     }
 
+    exit(1);
     return;
 }
 

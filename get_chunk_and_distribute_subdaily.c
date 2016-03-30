@@ -1634,7 +1634,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     printf("%f %f %f\n\n", par_day, diffuse_frac, direct_frac);
     sum_bm = 0.0;
     sum_df = 0.0;
-    for (i=1; i < NTIMESTEPS+1; i++) {
+    for (i = 1; i < NTIMESTEPS+1; i++) {
 
         hrtime = (float)i - 0.5;
 
@@ -1671,7 +1671,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
         *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
 
-        printf("%d %f %f\n", i, (rddf + rdbm), (par+(i-1)));
+        printf("%d %f %f %f\n", i, (rddf + rdbm), (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC, (par+(i-1)));
     }
 
     exit(1);

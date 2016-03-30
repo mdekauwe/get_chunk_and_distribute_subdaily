@@ -1300,14 +1300,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
-
-                /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
-                float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
-                                UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
-
-
-
-                fprintf(ofp, "%f\n", par_day);
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2, ndep, wind, press);
@@ -1658,9 +1650,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             sum_df += cos_df[i-1];
 
         }
-        printf("%d %f %f %f\n", i, cos_zenith[i-1], zenith, zenith*180.0/M_PI);
     }
-    printf("%f %f\n\n", sum_bm, sum_df);
 
     for (i = 1; i < NTIMESTEPS+1; i++) {
         /* daily total beam PAR (MJ m-2 d-1) */
@@ -1676,14 +1666,10 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         } else {
             rddf = 0.0;
         }
-        printf("%d %f %f\n", i, rdbm, rddf);
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
         *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
-
-
     }
 
-    exit(1);
     return;
 }
 

@@ -1038,7 +1038,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
     float vpd=0.0, tsoil=0.0;
     float sw=0.0, day_length;
-    float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
+    float vph09_tomorrow, vph15_yesterday;
     float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
 
     /*
@@ -1105,10 +1105,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             day_length = calc_day_length(kk, ndays, latitude);
 
             if (kk+1 > en_idx) {
-                tmin_tomorrow = tmin_ij[kk];
                 vph09_tomorrow = vph09_ij[kk];
             } else {
-                tmin_tomorrow = tmin_ij[kk+1];
                 vph09_tomorrow = vph09_ij[kk+1];
             }
 
@@ -1174,7 +1172,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
-    float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
+    float vph09_tomorrow, vph15_yesterday;
     float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
 
     sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
@@ -1246,10 +1244,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             day_length = calc_day_length(kk, ndays, latitude);
 
             if (kk+1 > en_idx) {
-                tmin_tomorrow = tmin_ij[kk];
                 vph09_tomorrow = vph09_ij[kk];
             } else {
-                tmin_tomorrow = tmin_ij[kk+1];
                 vph09_tomorrow = vph09_ij[kk+1];
             }
 
@@ -1353,44 +1349,6 @@ float calc_day_length(int doy, int yr_days, float latitude) {
     b = cos(latr) * cos(asin(sindec));
 
     return 12.0 * (1.0 + (2.0 / M_PI) * asin(a / b));
-}
-
-void calc_tam_tpm(float *Tam, float *Tpm, float Tmin, float Tmin_tomorrow,
-                  float Tmax, float daylength) {
-    /*
-    The diurnal pattern of air temperature T(t) is calculated from Tmax
-    and Tmin on the assumption of a sinusoidal pattern with T = Tmin at
-    sunrise and T = (Tmin + Tmax) / 2 at sunset.
-
-    Ross assumed that there was a 3/4 sinusoid in temperature from dawn to
-    dusk, ie started at Tmin, went to Tmax 2/3 of the way through the day,
-    then decayed to Tav at dusk.
-
-    If Tav = (Tmin + Tmax) / 2 and Tampl = (Tmax - Tmin) / 2 then the
-    time course of daytime temperature is described by:
-
-    Tav - Tampl * cos(t)
-
-    where t goes from 0 (dawn) to 3 * pi / 2 (dusk).
-
-    To get morning and afternoon averages you integrate this formula to get
-    Tam and Tpm
-
-    Reference
-    ----------
-    * McMurtie et al (1990) Modelling the Yield of Pinus radiata on a Site
-      Limited by Water and Nitrogen. Foremainder Ecology and Management, 30,
-      381-413.
-    */
-    float Tav, Tampl;
-
-    Tav = (Tmin + Tmax) / 2.0;
-    Tampl = (Tmax - Tmin) / 2.0;
-
-    *Tam = Tav - Tampl * (1.0 / sqrt(2.0)) / (3.0 * M_PI / 4.0);
-    *Tpm = Tav + Tampl * (1.0 + 1.0 / sqrt(2.0)) / (3.0 * M_PI / 4.0);
-
-    return;
 }
 
 float calc_vpd(float temp, float ea) {
@@ -1612,7 +1570,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     float cos_zenith[NTIMESTEPS];
     float tau = 0.76;            /* Transmissivity of atmosphere */
     float direct_frac, diffuse_frac;
-    float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df, hrtime;
+    float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df;
     float zenith, rddf, rdbm, par_day, beam_rad, diffuse_rad;
 
     /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
@@ -1631,43 +1589,41 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
 
     sum_bm = 0.0;
     sum_df = 0.0;
-    for (i = 1; i < NTIMESTEPS+1; i++) {
-        cos_bm[i-1] = 0.0;
-        cos_df[i-1] = 0.0;
-        hrtime = (float)i - 0.5;
+    for (i = 0; i < NTIMESTEPS; i++) {
+        cos_bm[i] = 0.0;
+        cos_df[i] = 0.0;
 
-        if (cos_zenith[i-1] > 0.0) {
-            zenith = acos(cos_zenith[i-1]);
+        if (cos_zenith[i] > 0.0) {
+            zenith = acos(cos_zenith[i]);
 
             /* set FBM = 0.0 for ZEN > 80 degrees */
             if (zenith < (80.0 * M_PI / 180.0)) {
-                cos_bm[i-1] = cos_zenith[i-1] * \
-                                pow(tau, (1.0 / cos_zenith[i-1]));
+                cos_bm[i] = cos_zenith[i] * pow(tau, (1.0 / cos_zenith[i]));
             } else {
-                cos_bm[i-1] = 0.0;
+                cos_bm[i] = 0.0;
             }
-            cos_df[i-1] = cos_zenith[i-1];
-            sum_bm += cos_bm[i-1];
-            sum_df += cos_df[i-1];
+            cos_df[i] = cos_zenith[i];
+            sum_bm += cos_bm[i];
+            sum_df += cos_df[i];
         }
     }
 
-    for (i = 1; i < NTIMESTEPS+1; i++) {
+    for (i = 0; i < NTIMESTEPS; i++) {
 
         if (sum_bm > 0.0) {
-            rdbm = beam_rad * cos_bm[i-1] / sum_bm;
+            rdbm = beam_rad * cos_bm[i] / sum_bm;
         } else {
             rdbm = 0.0;
         }
 
         if (sum_df > 0.0) {
-            rddf = diffuse_rad * cos_df[i-1] / sum_df;
+            rddf = diffuse_rad * cos_df[i] / sum_df;
         } else {
             rddf = 0.0;
         }
-        
+
         /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
-        *(par+(i-1)) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
+        *(par+i) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
     }
 
     return;

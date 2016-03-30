@@ -109,7 +109,6 @@ void   estimate_diurnal_temp(float, float, float, float *);
 void   estimate_diurnal_vph(float, float, float, float, float *);
 int    rand_int(unsigned int, unsigned int);
 float  calc_day_length(int, int, float);
-void   calc_tam_tpm(float *, float *, float, float, float, float);
 float  calc_vpd(float, float);
 int    is_leap_year(int);
 float  spitters(int, float, float *);

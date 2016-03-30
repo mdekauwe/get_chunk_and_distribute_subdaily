@@ -1622,8 +1622,8 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
             rddf = 0.0;
         }
 
-        /* MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1 */
-        *(par+i) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * DAY_2_SEC;
+        /* MJ m-2 30min-1 -> J m-2 s-1 -> umol m-2 s-1 */
+        *(par+i) = (rddf + rdbm) * MJ_TO_J * J_TO_UMOL * HLFHR_2_SEC;
     }
 
     return;

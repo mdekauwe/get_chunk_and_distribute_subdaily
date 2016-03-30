@@ -33,6 +33,8 @@
 #define DEG_TO_KELVIN 273.15
 #define SEC_2_HFHR 1800.0
 #define NTIMESTEPS 48
+#define HLFHR_2_SEC 1.0 / 1800.0
+
 
 typedef struct  {
     int    row_start;

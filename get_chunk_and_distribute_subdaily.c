@@ -1137,21 +1137,24 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                 tsoil += tair[hod];
             }
             tsoil /= 48;
+
+            float MJ_TO_J = 1E6;
+            float SEC_2_DAY = 86400.0;
+            float DAY_2_SEC = 1.0 / SEC_2_DAY;
+            float SW_2_PAR = 2.3;
+            float J_TO_UMOL = 4.57;
+            float UMOL_TO_J = 1.0 / J_TO_UMOL;
+            float J_TO_MJ = 1E-6;
+            /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
+            float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
+                            UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
+
+
             printf("%d %d: %d,%d, %f %f\n", i, j, year, doy_cnt+1, par_day, sw);
             for (hod = 0; hod < 48; hod++) {
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
-                float MJ_TO_J = 1E6;
-                float SEC_2_DAY = 86400.0;
-                float DAY_2_SEC = 1.0 / SEC_2_DAY;
-                float SW_2_PAR = 2.3;
-                float J_TO_UMOL = 4.57;
-                float UMOL_TO_J = 1.0 / J_TO_UMOL;
-                float J_TO_MJ = 1E-6;
-                /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
-                float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
-                                UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
 
 
 

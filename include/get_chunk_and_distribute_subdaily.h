@@ -22,7 +22,17 @@
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
-
+#define SW_2_PAR 2.3
+#define MJ_TO_J 1E6
+#define SEC_2_DAY 86400.0
+#define DAY_2_SEC 1.0 / SEC_2_DAY
+#define J_TO_UMOL 4.57
+#define UMOL_TO_J 1.0 / J_TO_UMOL
+#define J_TO_MJ 1E-6
+#define hPa_2_kPa 0.1
+#define DEG_TO_KELVIN 273.15
+#define SEC_2_HFHR 1800.0
+#define NTIMESTEPS 48
 
 typedef struct  {
     int    row_start;
@@ -102,15 +112,15 @@ float  calc_day_length(int, int, float);
 void   calc_tam_tpm(float *, float *, float, float, float, float);
 float  calc_vpd(float, float);
 int    is_leap_year(int);
-float spitters(int, float, float *);
-float day_angle(int);
-float calculate_solar_declination(int, float);
-float calculate_eqn_of_time(float);
-float calculate_solar_noon(float, float);
-float calculate_hour_angle(float, float);
-float calc_extra_terrestrial_rad(int, float);
-float round_to_value(float, float);
-void  calculate_solar_geometry(int, float, float, float *);
+float  spitters(int, float, float *);
+float  day_angle(int);
+float  calculate_solar_declination(int, float);
+float  calculate_eqn_of_time(float);
+float  calculate_solar_noon(float, float);
+float  calculate_hour_angle(float, float);
+float  calc_extra_terrestrial_rad(int, float);
+float  round_to_value(float, float);
+void   calculate_solar_geometry(int, float, float, float *);
 
 
 #endif

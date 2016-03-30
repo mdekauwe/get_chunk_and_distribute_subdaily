@@ -1039,7 +1039,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float vpd=0.0, tsoil=0.0;
     float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float vph[48], rain[48], tair[48], par[48];
+    float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1133,25 +1133,18 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                                   &(tair[0]));
 
             tsoil = 0.0;
-            for (hod = 0; hod < 48; hod++) {
+            for (hod = 0; hod < NTIMESTEPS; hod++) {
                 tsoil += tair[hod];
             }
-            tsoil /= 48;
+            tsoil /= (float)NTIMESTEPS;
 
-            float MJ_TO_J = 1E6;
-            float SEC_2_DAY = 86400.0;
-            float DAY_2_SEC = 1.0 / SEC_2_DAY;
-            float SW_2_PAR = 2.3;
-            float J_TO_UMOL = 4.57;
-            float UMOL_TO_J = 1.0 / J_TO_UMOL;
-            float J_TO_MJ = 1E-6;
             /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
             float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
                             UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
 
 
             printf("%d %d: %d,%d, %f %f\n", i, j, year, doy_cnt+1, par_day, sw);
-            for (hod = 0; hod < 48; hod++) {
+            for (hod = 0; hod < NTIMESTEPS; hod++) {
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
@@ -1193,8 +1186,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float tmin_tomorrow, vph09_tomorrow, vph15_yesterday;
-    float vph[48], rain[48], tair[48], par[48];
-    float SW_2_PAR = 2.3;
+    float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
+
     sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
 
     ofp = fopen(ofname, "wb");
@@ -1295,12 +1288,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
 
             tsoil = 0.0;
-            for (hod = 0; hod < 48; hod++) {
+            for (hod = 0; hod < NTIMESTEPS; hod++) {
                 tsoil += tair[hod];
             }
-            tsoil /= 48;
+            tsoil /= (float)NTIMESTEPS;
 
-            for (hod = 0; hod < 48; hod++) {
+            for (hod = 0; hod < NTIMESTEPS; hod++) {
 
                 /*
                 ** There are a sequence (as much as 12 days, perhaps more) of
@@ -1318,13 +1311,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
-                float MJ_TO_J = 1E6;
-                float SEC_2_DAY = 86400.0;
-                float DAY_2_SEC = 1.0 / SEC_2_DAY;
-                float SW_2_PAR = 2.3;
-                float J_TO_UMOL = 4.57;
-                float UMOL_TO_J = 1.0 / J_TO_UMOL;
-                float J_TO_MJ = 1E-6;
+
                 /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
                 float par_day = sw * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
                                 UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
@@ -1440,8 +1427,7 @@ float calc_vpd(float temp, float ea) {
     ----------
     * Monteith JL & Unsworth MH (1990) Principles of environmental physics.
     */
-    float hPa_2_kPa = 0.1;
-    float DEG_TO_KELVIN = 273.15;
+
     float Tk, A, T_star, T_dash, es_T_star, esat, vpd;
 
     Tk = temp + DEG_TO_KELVIN;
@@ -1488,9 +1474,9 @@ void estimate_diurnal_vph(float vph09, float vph15, float vph09_next,
     /* number of hours gap, i.e. 3pm to 9am the next day */
     float gap = 18.0;
     float hour;
-    int    i, ntimesteps = 48;
+    int    i;
 
-    for (i = 1; i < ntimesteps+1; i++) {
+    for (i = 1; i < NTIMESTEPS+1; i++) {
         /* first zero values */
         *(vph+i) = 0.0;
 
@@ -1532,7 +1518,7 @@ void disaggregate_rainfall(float rain_day, float *rain) {
       Management of Plantation Forests. Ed. M. Tome. European
       Cultivated Forest Inst., EFI Proc. No. 41D, Bordeaux, pp 45-58.
     */
-    int   i, j, hour_index, ntimesteps = 48, num_hrs_with_rain;
+    int   i, j, hour_index, num_hrs_with_rain;
     float rate;
 
     if (rain_day <= 2.0) {
@@ -1542,8 +1528,8 @@ void disaggregate_rainfall(float rain_day, float *rain) {
 
     } else if (rain_day > 46.0) {
         /* All rain falls in 24 hours for storms >46 mm */
-        for (i = 0; i < ntimesteps; i++) {
-            *(rain+i) = rain_day / 48.0;
+        for (i = 0; i < NTIMESTEPS; i++) {
+            *(rain+i) = rain_day / (float)NTIMESTEPS;
         }
 
     } else {
@@ -1554,7 +1540,7 @@ void disaggregate_rainfall(float rain_day, float *rain) {
         */
 
         /* zero everything before we start */
-        for (i = 0; i < ntimesteps; i++) {
+        for (i = 0; i < NTIMESTEPS; i++) {
             *(rain+i) = 0.0;
         }
 
@@ -1597,14 +1583,14 @@ void estimate_diurnal_temp(float tmin, float tmax, float day_length,
     float sunrise = 12.0 - day_length / 2.0 + c;
     float sunset = 12.0 + day_length / 2.0;
     float m, n, d, tset, hour;
-    int   i, ntimesteps = 48;
+    int   i;
 
     /* temperature at sunset */
     m = sunset - sunrise + c;
     tset = (tmax - tmin) * sin(M_PI * m / (day_length + 2.0 * a)) + tmin;
 
 
-    for (i = 1; i < ntimesteps+1; i++) {
+    for (i = 1; i < NTIMESTEPS+1; i++) {
 
         hour = (float)i / 2.0;
 
@@ -1641,18 +1627,11 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         Calculate daily course of incident PAR from daily totals using routine
         from MAESTRA
     */
-    int   i, ntimesteps = 48;
-    float SW_2_PAR = 2.3;
-    float cos_zenith[ntimesteps];
-    float J_TO_UMOL = 4.57;
-    float UMOL_TO_J = 1.0 / J_TO_UMOL;
+    int   i;
+    float cos_zenith[NTIMESTEPS];
     float tau = 0.76;            /* Transmissivity of atmosphere */
     float direct_frac, diffuse_frac;
-    float MJ_TO_J = 1E6;
-    float J_TO_MJ = 1E-6;
-    float SEC_2_DAY = 86400.0;
-    float DAY_2_SEC = 1.0 / SEC_2_DAY;
-    float cos_bm[ntimesteps], cos_df[ntimesteps], sum_bm, sum_df, hrtime;
+    float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df, hrtime;
     float zenith, rddf, rdbm, par_day;
     /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
     par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
@@ -1664,7 +1643,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
 
     sum_bm = 0.0;
     sum_df = 0.0;
-    for (i=1; i < ntimesteps+1; i++) {
+    for (i=1; i < NTIMESTEPS+1; i++) {
 
         hrtime = (float)i - 0.5;
 
@@ -1684,7 +1663,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         }
     }
 
-    for (i = 1; i < ntimesteps+1; i++) {
+    for (i = 1; i < NTIMESTEPS+1; i++) {
 
         if (sum_bm > 0.0) {
             rdbm = par_day * direct_frac * cos_bm[i-1] / sum_bm;
@@ -1728,11 +1707,11 @@ void calculate_solar_geometry(int doy, float latitude, float longitude,
     -----------
     * De Pury & Farquhar (1997) PCE, 20, 537-557.
     */
-    int   i, ntimesteps = 48;
+    int   i;
     float rdec, et, t0, h, gamma, rlat, sin_beta;
     float hod;
 
-    for (i = 1; i < ntimesteps+1; i++) {
+    for (i = 1; i < NTIMESTEPS+1; i++) {
 
         /* need to convert 30 min data, 0-47 to 0-23.5 */
         hod = i / 2.0;
@@ -1923,17 +1902,15 @@ float spitters(int doy, float par, float *cos_zenith) {
 
     /* Fraction of global radiation that is PAR */
     float fpar = 0.5;
-    float SEC_2_HFHR = 1800.0;
-    float J_TO_MJ = 1E-6;
-    float CONV = SEC_2_HFHR * J_TO_MJ;
+    float conv = SEC_2_HFHR * J_TO_MJ;
     float S0, tau, diffuse_frac;
-    int   i, ntimesteps = 48;
+    int   i;
 
 
     /* Calculate extra-terrestrial radiation */
     S0 = 0.0;
-    for (i = 1; i < ntimesteps+1; i++) {
-        S0 += calc_extra_terrestrial_rad(doy, *(cos_zenith+(i-1))) * CONV;
+    for (i = 1; i < NTIMESTEPS+1; i++) {
+        S0 += calc_extra_terrestrial_rad(doy, *(cos_zenith+(i-1))) * conv;
     }
 
     /* atmospheric transmisivity */

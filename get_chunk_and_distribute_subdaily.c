@@ -1619,6 +1619,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
               UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
 
+    printf("%f %f %f\n", sw_rad_day, par_day, MJ_TO_J * DAY_2_SEC * SW_2_PAR * UMOL_TO_J * J_TO_MJ * SEC_2_DAY);
     calculate_solar_geometry(doy, lat, lon, &(cos_zenith[0]));
     diffuse_frac = spitters(doy, par_day, cos_zenith);
     direct_frac = 1.0 - diffuse_frac;

@@ -1137,7 +1137,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                 tsoil += tair[hod];
             }
             tsoil /= 48;
-
+            printf("%d %d: %d,%d, %f %f\n", i, j, year, doy_cnt+1, par_day, sw);
             for (hod = 0; hod < 48; hod++) {
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
@@ -1155,7 +1155,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
 
 
-                printf("%d,%d, %f\n", year, doy_cnt+1, par_day);
+
 
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],

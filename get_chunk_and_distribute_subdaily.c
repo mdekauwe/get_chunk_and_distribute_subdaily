@@ -272,7 +272,7 @@ int main(int argc, char **argv)
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
 
-        /* forcing using 1960-1990 data - pre-industrial CO2 */
+        /* forcing using 1990-2011 data */
         write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
@@ -348,8 +348,8 @@ void initialise_stuff(control *c) {
     c->yllcorner = -44.025;
     c->start_yr = 1960;
     c->end_yr = 1990;
-    c->start_yr_forcing = 1960;
-    c->end_yr_forcing = 1990;
+    c->start_yr_forcing = 1990;
+    c->end_yr_forcing = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
 
@@ -1072,7 +1072,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
-    co2 = 285.0;
+    co2 = 350.0;        /* spin up using pre 1990 value (1989 = 351.69 */
     ndep = -9999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
@@ -1168,14 +1168,20 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     long date_offset;
     int k=0, kk, jj, hod, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year;
-    int st_idx_rad;
-    float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
+    int st_idx_rad, co2_index;
+    float ndep=0.0, wind=0.0, press=0.0;
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
     float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
 
-    sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
+    /* 1990-2011 */
+    float co2[] = {352.97, 354.37, 355.33, 356.0, 357.68, 359.837, 361.462,
+                   363.155, 365.322, 367.348, 368.865, 370.467, 372.522,
+                   374.76, 376.812, 378.812, 380.827, 382.777, 384.8,
+                   387.001, 389.285, 391.563};
+
+    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
 
     ofp = fopen(ofname, "wb");
 
@@ -1194,12 +1200,11 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
 
-
-    co2 = 285.0;
     ndep = -9999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
+    co2_index = 0;
     for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
         yr_to_get = k;
 
@@ -1298,14 +1303,14 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
-                        tsoil, vpd, co2, ndep, wind, press);
+                        tsoil, vpd, co2[co2_index], ndep, wind, press);
             }
 
 
             doy_cnt++;
             jj++;
         }
-
+        co2_index++;
     }
 
     fclose(ofp);

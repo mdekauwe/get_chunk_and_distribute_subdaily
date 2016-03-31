@@ -56,6 +56,8 @@ typedef struct  {
     float  cellsize;
     float  xllcorner;
     float  yllcorner;
+    float  xurcorner;
+    float  yurcorner;
     int    start_yr;
     int    end_yr;
     int    start_yr_forcing;

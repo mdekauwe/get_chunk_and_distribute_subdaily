@@ -346,6 +346,8 @@ void initialise_stuff(control *c) {
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
+    c->xurcorner = 154.025;
+    c->yurcorner = -9.975;
     c->start_yr = 1960;
     c->end_yr = 1990;
     c->start_yr_forcing = 1990;
@@ -1059,8 +1061,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
-    latitude = c->yllcorner + (i * c->cellsize);
+    latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j  * c->cellsize);
+
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
@@ -1185,9 +1188,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     ofp = fopen(ofname, "wb");
 
-    latitude = c->yllcorner + (i * c->cellsize);
-    longitude = c->xllcorner + (j * c->cellsize);
-
+    latitude = c->yurcorner - (i * c->cellsize);
+    longitude = c->xllcorner + (j  * c->cellsize);
 
     current_time = time(NULL);
     c_time_string = ctime(&current_time);

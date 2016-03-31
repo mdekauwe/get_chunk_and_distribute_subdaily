@@ -1062,7 +1062,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     ofp = fopen(ofname, "wb");
 
     latitude = c->yurcorner - (i * c->cellsize);
-    longitude = c->xllcorner + (j  * c->cellsize);
+    longitude = c->xllcorner + (j * c->cellsize);
 
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
@@ -1189,7 +1189,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     ofp = fopen(ofname, "wb");
 
     latitude = c->yurcorner - (i * c->cellsize);
-    longitude = c->xllcorner + (j  * c->cellsize);
+    longitude = c->xllcorner + (j * c->cellsize);
 
     current_time = time(NULL);
     c_time_string = ctime(&current_time);

@@ -611,8 +611,8 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
         start_yr = c->start_yr_rad;
         end_yr = c->end_yr_rad;
     } else {
-        start_yr = c->start_yr;
-        end_yr = c->end_yr;
+        start_yr = c->start_yr_all;
+        end_yr = c->end_yr_all;
     }
 
     date_count = 0;
@@ -677,7 +677,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     */
                     out_offset = day_count + num_days_offset;
                     out_offset2 = day_count * c->num_land_pixels + pixel_count;
-
                     (*met_data)[out_offset] = met_data_day[in_offset];
 
                     /*
@@ -1219,8 +1218,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         en_idx = -999;
         date_offset = 0;
         for (kk = 0; kk < m->tmax_ndays; kk++) {
-            year = m->tmax_dates[date_offset];
-            if (year == yr_to_get) {
+            year = (int)m->tmax_dates[date_offset];
+            if (year == (int)yr_to_get) {
                 st_idx = kk;
                 if (is_leap_year(yr_to_get)) {
                     ndays = 366;
@@ -1239,8 +1238,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         if (yr_to_get >= 1990) {
             date_offset = 0;
             for (jj = 0; jj < m->rad_ndays; jj++) {
-                year = m->rad_dates[date_offset];
-                if (year == yr_to_get) {
+                year = (int)m->rad_dates[date_offset];
+                if (year == (int)yr_to_get) {
                     st_idx_rad = jj;
                     break;
                 }

@@ -355,6 +355,11 @@ void initialise_stuff(control *c) {
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
 
+    /* needs to be as big as spinup and forcing requries otherwise we wont
+    read all the data into the array */
+   c->start_yr_all = 1960;
+   c->end_yr_all = 2011;
+
 
     return;
 }
@@ -395,7 +400,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
         Count the number of days to size arrays
     */
     total_days = 0;
-    for (yr = c->start_yr; yr <= c->end_yr; yr++) {
+    for (yr = c->start_yr_all; yr <= c->end_yr_all; yr++) {
         if (is_leap_year(yr)) {
             total_days += 366;
         } else {

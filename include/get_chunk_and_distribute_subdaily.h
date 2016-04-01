@@ -64,6 +64,8 @@ typedef struct  {
     int    end_yr_forcing;
     int    start_yr_rad;
     int    end_yr_rad;
+    int    start_yr_all;
+    int    end_yr_all;
     char   fdir[STRING_LENGTH];
 } control;
 

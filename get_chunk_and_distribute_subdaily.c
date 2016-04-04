@@ -1471,6 +1471,11 @@ void disaggregate_rainfall(float rain_day, float *rain) {
     int   i, j, hour_index, num_hrs_with_rain;
     float rate;
 
+    /* zero everything before we start */
+    for (i = 0; i < NTIMESTEPS; i++) {
+        *(rain+i) = 0.0;
+    }
+
     if (rain_day <= 2.0) {
         /* All rain falls in one hour for light storms (<2 mm) */
         hour_index = rand_int(0, 47);
@@ -1484,16 +1489,10 @@ void disaggregate_rainfall(float rain_day, float *rain) {
 
     } else {
         /*
-            Aim if for all rain to fall at 2mm/hour at a random time of the day.
-            If we generate the same random number, then we increase rainfall
-            for this hour
+        ** Aim if for all rain to fall at 2mm/hour at a random time of the day.
+        ** If we generate the same random number, then we increase rainfall
+        ** for this hour
         */
-
-        /* zero everything before we start */
-        for (i = 0; i < NTIMESTEPS; i++) {
-            *(rain+i) = 0.0;
-        }
-
         num_hrs_with_rain = (int)(rain_day / 2.0);
         rate = rain_day / (float)num_hrs_with_rain;
 

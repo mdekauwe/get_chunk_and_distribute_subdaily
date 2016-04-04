@@ -4,28 +4,29 @@
 **              get_chunk_and_distribute_subdaily
 **
 ** DESCRIPTION:
-**              Extract a chunk (num_rows x total_cols) from the AWAP
-**              meteorological data and create a GDAY spinup and forcing
-**              simulation file for each row and col within the chunk of
-**              Australia. The code then divides the pixels between processors
+**              Extract a chunk (Nrows x Ncols) from the AWAP meteorological
+**              data and create GDAY spinup and forcing simulation files
+**              for each row and col within the chunk of Australia. The code
+**              divides each of the row,col pairs between different processors
 **              using the MPI libraries.
 **
-**              We don't have overlapping radiation data, i.e. nothing before
-**              1990, so we need to build a climatology and in fill with that
-**              for our spinup files.
+**              NB: We don't have overlapping radiation data, i.e. nothing
+**              before1990, so we need to build a climatology and in fill with
+**              that for our spinup files.
 **
-**              This version creates 30 minute files
+**              This version creates 30 minute files.
 **
 ** NOTES:
 **              run cmd:
-**              mpirun -np 8 get_chunk_and_distribute_subdaily -s 300 -e 301
+**              mpirun -np 8 get_chunk_and_distribute_subdaily -rs 300 -re 301 \
+**                     -cs 749 -ce 750
 **
 **
 ** AUTHOR:      Martin De Kauwe with MPI assistance from Andrey Bliznyuk@NCI
 **
 ** EMAIL:       mdekauwe@gmail.com
 **
-** DATE:        18th March, 2016
+** DATE:        4th April, 2016
 **
 */
 

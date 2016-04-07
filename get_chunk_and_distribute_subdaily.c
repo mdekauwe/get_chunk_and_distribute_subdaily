@@ -219,7 +219,8 @@ int main(int argc, char **argv)
     **
     ** The unpacking logic, is reversed from the packing logic, but works fine
     ** because the num_day_offset has been appropriately moved to match the
-    ** k loop
+    **
+    k loop
     */
 
     pixel_count = 0;
@@ -1046,7 +1047,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float vpd=0.0, tsoil=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
-    float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
+    float vph[NHRS], rain[NHRS], tair[NHRS], par[NHRS];
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1058,13 +1059,26 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
 
+    /* I figured this out, accounting for leap years get_ndays.py */
+    long  odays = 10958;
+    int   ovars = 12;
+    long  ocnt;
+    float odata[ovars * odays * NHRS];
+
     /*
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
     */
 
-    sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
+    if (ofp == NULL) {
+        fprintf(stderr, "Error opening file for write\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /*sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
+    ofp = fopen(ofname, "wb"); */
 
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
@@ -1085,7 +1099,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
-
+    ocnt = 0;
     for (k = 0; k < len_shuffled_yrs; k++) {
         yr_to_get = shuffled_yrs[k];
         st_idx = -999;
@@ -1139,23 +1153,46 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                                   &(tair[0]));
 
             tsoil = 0.0;
-            for (hod = 0; hod < NTIMESTEPS; hod++) {
+            for (hod = 0; hod < NHRS; hod++) {
                 tsoil += tair[hod];
             }
-            tsoil /= (float)NTIMESTEPS;
+            tsoil /= (float)NHRS;
 
-            for (hod = 0; hod < NTIMESTEPS; hod++) {
+            for (hod = 0; hod < NHRS; hod++) {
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
+                /* save everything and do a single big dump at the end */
+                odata[ocnt] = (float)year;
+                odata[ocnt+1] = (float)doy_cnt+1;
+                odata[ocnt+2] = (float)hod;
+                odata[ocnt+3] = rain[hod];
+                odata[ocnt+4] = par[hod];
+                odata[ocnt+5] = tair[hod];
+                odata[ocnt+6] = tsoil;
+                odata[ocnt+7] = vpd;
+                odata[ocnt+8] = co2;
+                odata[ocnt+9] = ndep;
+                odata[ocnt+10] = wind;
+                odata[ocnt+11] = press;
+                /*
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2, ndep, wind, press);
+                */
+                ocnt += ovars;
             }
             doy_cnt++;
         }
 
     }
+
+    if (fwrite(odata, sizeof(float), ovars * odays * NHRS, ofp) !=\
+                                     ovars * odays * NHRS) {
+        fprintf(stderr, "Error writing spinup file\n");
+	    exit(EXIT_FAILURE);
+    }
+
     fclose(ofp);
 
 
@@ -1181,7 +1218,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
-    float vph[NTIMESTEPS], rain[NTIMESTEPS], tair[NTIMESTEPS], par[NTIMESTEPS];
+    float vph[NHRS], rain[NHRS], tair[NHRS], par[NHRS];
 
     /* 1990-2011 */
     float co2[] = {352.97, 354.37, 355.33, 356.0, 357.68, 359.837, 361.462,
@@ -1189,10 +1226,23 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                    374.76, 376.812, 378.812, 380.827, 382.777, 384.8,
                    387.001, 389.285, 391.563};
 
-    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
+    /* I figured this out, accounting for leap years get_ndays.py */
+    int   odays = 8035;
+    int   ovars = 12;
+    long  ocnt;
+    float odata[ovars * odays * NHRS];
 
+    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
+    if (ofp == NULL) {
+        fprintf(stderr, "Error opening file for write\n");
+        exit(EXIT_FAILURE);
+    }
 
+    /*
+    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
+    ofp = fopen(ofname, "wb");
+    */
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
 
@@ -1212,6 +1262,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
     co2_index = 0;
+    ocnt = 0;
     for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
         yr_to_get = k;
 
@@ -1285,12 +1336,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
 
             tsoil = 0.0;
-            for (hod = 0; hod < NTIMESTEPS; hod++) {
+            for (hod = 0; hod < NHRS; hod++) {
                 tsoil += tair[hod];
             }
-            tsoil /= (float)NTIMESTEPS;
+            tsoil /= (float)NHRS;
 
-            for (hod = 0; hod < NTIMESTEPS; hod++) {
+            for (hod = 0; hod < NHRS; hod++) {
 
                 /*
                 ** There are a sequence (as much as 12 days, perhaps more) of
@@ -1308,9 +1359,25 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                 vpd = calc_vpd(tair[hod], vph[hod]);
 
+                /* save everything and do a single big dump at the end */
+                odata[ocnt] = (float)year;
+                odata[ocnt+1] = (float)doy_cnt+1;
+                odata[ocnt+2] = (float)hod;
+                odata[ocnt+3] = rain[hod];
+                odata[ocnt+4] = par[hod];
+                odata[ocnt+5] = tair[hod];
+                odata[ocnt+6] = tsoil;
+                odata[ocnt+7] = vpd;
+                odata[ocnt+8] = co2[co2_index];
+                odata[ocnt+9] = ndep;
+                odata[ocnt+10] = wind;
+                odata[ocnt+11] = press;
+                /*
                 fprintf(ofp, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
                         year, doy_cnt+1, hod, rain[hod], par[hod], tair[hod],
                         tsoil, vpd, co2[co2_index], ndep, wind, press);
+                */
+                ocnt += ovars;
             }
 
 
@@ -1318,6 +1385,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             jj++;
         }
         co2_index++;
+    }
+
+    if (fwrite(odata, sizeof(float), ovars * odays * NHRS, ofp) !=\
+                                     ovars * odays * NHRS) {
+	   fprintf(stderr, "Error writing forcing file\n");
+	   exit(EXIT_FAILURE);
     }
 
     fclose(ofp);
@@ -1427,7 +1500,7 @@ void estimate_diurnal_vph(float vph09, float vph15, float vph09_next,
     float hour;
     int    i;
 
-    for (i = 1; i < NTIMESTEPS+1; i++) {
+    for (i = 1; i < NHRS+1; i++) {
         /* first zero values */
         *(vph+i) = 0.0;
 
@@ -1473,7 +1546,7 @@ void disaggregate_rainfall(float rain_day, float *rain) {
     float rate;
 
     /* zero everything before we start */
-    for (i = 0; i < NTIMESTEPS; i++) {
+    for (i = 0; i < NHRS; i++) {
         *(rain+i) = 0.0;
     }
 
@@ -1484,8 +1557,8 @@ void disaggregate_rainfall(float rain_day, float *rain) {
 
     } else if (rain_day > 46.0) {
         /* All rain falls in 24 hours for storms >46 mm */
-        for (i = 0; i < NTIMESTEPS; i++) {
-            *(rain+i) = rain_day / (float)NTIMESTEPS;
+        for (i = 0; i < NHRS; i++) {
+            *(rain+i) = rain_day / (float)NHRS;
         }
 
     } else {
@@ -1540,7 +1613,7 @@ void estimate_diurnal_temp(float tmin, float tmax, float day_length,
     tset = (tmax - tmin) * sin(M_PI * m / (day_length + 2.0 * a)) + tmin;
 
 
-    for (i = 1; i < NTIMESTEPS+1; i++) {
+    for (i = 1; i < NHRS+1; i++) {
 
         hour = (float)i / 2.0;
 
@@ -1578,10 +1651,10 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         from MAESTRA
     */
     int   i;
-    float cos_zenith[NTIMESTEPS];
+    float cos_zenith[NHRS];
     float tau = 0.76;            /* Transmissivity of atmosphere */
     float direct_frac, diffuse_frac;
-    float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df;
+    float cos_bm[NHRS], cos_df[NHRS], sum_bm, sum_df;
     float zenith, rddf, rdbm, par_day, beam_rad, diffuse_rad;
 
     /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
@@ -1600,7 +1673,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
 
     sum_bm = 0.0;
     sum_df = 0.0;
-    for (i = 0; i < NTIMESTEPS; i++) {
+    for (i = 0; i < NHRS; i++) {
         cos_bm[i] = 0.0;
         cos_df[i] = 0.0;
 
@@ -1619,7 +1692,7 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
         }
     }
 
-    for (i = 0; i < NTIMESTEPS; i++) {
+    for (i = 0; i < NHRS; i++) {
 
         if (sum_bm > 0.0) {
             rdbm = beam_rad * cos_bm[i] / sum_bm;
@@ -1667,7 +1740,7 @@ void calculate_solar_geometry(int doy, float latitude, float longitude,
     float rdec, et, t0, h, gamma, rlat, sin_beta;
     float hod;
 
-    for (i = 1; i < NTIMESTEPS+1; i++) {
+    for (i = 1; i < NHRS+1; i++) {
 
         /* need to convert 30 min data, 0-47 to 0-23.5 */
         hod = i / 2.0;
@@ -1866,7 +1939,7 @@ float spitters(int doy, float par, float *cos_zenith) {
 
     /* Calculate extra-terrestrial radiation */
     S0 = 0.0;
-    for (i = 1; i < NTIMESTEPS+1; i++) {
+    for (i = 1; i < NHRS+1; i++) {
         S0 += calc_extra_terrestrial_rad(doy, *(cos_zenith+(i-1))) * conv;
     }
 

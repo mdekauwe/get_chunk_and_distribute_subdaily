@@ -212,14 +212,14 @@ int main(int argc, char **argv)
     }
 
     /*
-        Each set of npairs is the total met data array divided by the number of
-        cores, so we are working on a chunk here. For each chunk we will loop
-        over the i,j pair unpack each met var and write the i,j met driving file
-        for GDAY.
-
-        The unpacking logic, is reversed from the packing logic, but works fine
-        because the num_day_offset has been appropriately moved to match the
-        k loop
+    ** Each set of npairs is the total met data array divided by the number of
+    ** cores, so we are working on a chunk here. For each chunk we will loop
+    ** over the i,j pair unpack each met var and write the i,j met driving file
+    ** for GDAY.
+    **
+    ** The unpacking logic, is reversed from the packing logic, but works fine
+    ** because the num_day_offset has been appropriately moved to match the
+    ** k loop
     */
 
     pixel_count = 0;

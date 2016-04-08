@@ -1083,13 +1083,11 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         fprintf(stderr, "Error opening file for write\n");
         exit(EXIT_FAILURE);
     }
-
-    /*sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
-    ofp = fopen(ofname, "wb");
-
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
 
+    /*sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
+    ofp = fopen(ofname, "wb");
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
@@ -1252,13 +1250,14 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         fprintf(stderr, "Error opening file for write\n");
         exit(EXIT_FAILURE);
     }
+    latitude = c->yurcorner - (i * c->cellsize);
+    longitude = c->xllcorner + (j * c->cellsize);
 
     /*
     sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
-    latitude = c->yurcorner - (i * c->cellsize);
-    longitude = c->xllcorner + (j * c->cellsize);
+
 
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
@@ -1271,7 +1270,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
     */
-    
+
     ndep = -9999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */

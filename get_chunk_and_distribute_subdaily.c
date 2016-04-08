@@ -1059,6 +1059,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
 
+    /*
     long odays = 0;
     for (k = 0; k < len_shuffled_yrs; k++) {
         yr_to_get = shuffled_yrs[k];
@@ -1067,7 +1068,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         } else {
             odays += 365;
         }
-    }
+    }*/
+    long odays = 10958;
     int   ovars = 12;
     long  ocnt;
     float odata[ovars * odays * NHRS];
@@ -1232,6 +1234,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                    374.76, 376.812, 378.812, 380.827, 382.777, 384.8,
                    387.001, 389.285, 391.563};
 
+    /*
     long odays = 0;
     for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
         if (is_leap_year(k)) {
@@ -1239,7 +1242,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         } else {
             odays += 365;
         }
-    }
+    } */
+    long odays = 8035;
     int   ovars = 12;
     long  ocnt;
     float odata[ovars * odays * NHRS];

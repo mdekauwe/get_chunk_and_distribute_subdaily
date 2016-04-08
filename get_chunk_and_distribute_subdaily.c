@@ -1059,8 +1059,15 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
 
-    /* I figured this out, accounting for leap years get_ndays.py */
-    long  odays = 10958;
+    long odays = 0;
+    for (k = 0; k < len_shuffled_yrs; k++) {
+        yr_to_get = shuffled_yrs[k];
+        if (is_leap_year(yr_to_get)) {
+            odays += 366;
+        } else {
+            odays += 365;
+        }
+    }
     int   ovars = 12;
     long  ocnt;
     float odata[ovars * odays * NHRS];
@@ -1078,7 +1085,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     }
 
     /*sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
-    ofp = fopen(ofname, "wb"); */
+    ofp = fopen(ofname, "wb");
 
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
@@ -1093,6 +1100,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "#--,--,--,mm/30min,umol/m2/s,degC,degC,kPa,ppm,t/ha/30min,");
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
+    */
 
     co2 = 350.0;        /* spin up using pre 1990 value (1989 = 351.69 */
     ndep = -9999.9;
@@ -1226,8 +1234,14 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                    374.76, 376.812, 378.812, 380.827, 382.777, 384.8,
                    387.001, 389.285, 391.563};
 
-    /* I figured this out, accounting for leap years get_ndays.py */
-    int   odays = 8035;
+    long odays = 0;
+    for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
+        if (is_leap_year(k)) {
+            odays += 366;
+        } else {
+            odays += 365;
+        }
+    }
     int   ovars = 12;
     long  ocnt;
     float odata[ovars * odays * NHRS];
@@ -1242,7 +1256,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     /*
     sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
-    */
+
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
 
@@ -1256,7 +1270,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "#--,--,--,mm/30min,umol/m2/s,degC,degC,kPa,ppm,t/ha/30min,");
     fprintf(ofp, "m/s,kPa,\n");
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
-
+    */
+    
     ndep = -9999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */

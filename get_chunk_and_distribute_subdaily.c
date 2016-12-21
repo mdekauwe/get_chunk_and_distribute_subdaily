@@ -1204,7 +1204,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     }
 
     fclose(ofp);
-    free(odata);
 
     return;
 }

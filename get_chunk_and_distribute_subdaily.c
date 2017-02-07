@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
 
     control *c;
     c = (control *)malloc(sizeof (control));
-	if (c == NULL) {
+    if (c == NULL) {
         fprintf(stderr, "control structure: Not allocated enough memory!\n");
         exit(1);
-	}
+    }
 
 	met *m;
 	m = (met *)malloc(sizeof (met));

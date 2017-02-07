@@ -64,12 +64,12 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-	met *m;
-	m = (met *)malloc(sizeof (met));
-	if (m == NULL) {
-		fprintf(stderr, "met structure: Not allocated enough memory!\n");
-		exit(1);
-	}
+    met *m;
+    m = (met *)malloc(sizeof (met));
+    if (m == NULL) {
+        fprintf(stderr, "met structure: Not allocated enough memory!\n");
+        exit(1);
+    }
 
     initialise_stuff(c);
     clparser(argc, argv, c);

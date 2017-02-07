@@ -1053,11 +1053,18 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         this sequence of years was randomly generated outside of the code
         get_random_50_years_for_spinup.py
     */
-    int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972,
-                          1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962,
-                          1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982,
-                          1985, 1980, 1966};
-    int len_shuffled_yrs = 30;
+    //int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972,
+    //                      1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962,
+    //                      1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982,
+    //                      1985, 1980, 1966};
+    //int len_shuffled_yrs = 30;
+
+    // Use sequential years instead, as we don't want to break summers
+    int shuffled_yrs[] = {1970, 1971, 1972, 1973, 1974,
+                          1975, 1976, 1977, 1978, 1979,
+                          1980, 1981, 1982, 1983, 1984,
+                          1985, 1986, 1987, 1988, 1989};
+    int len_shuffled_yrs = 20;
 
     /*
     long odays = 0;

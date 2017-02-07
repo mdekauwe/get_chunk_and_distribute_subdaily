@@ -32,8 +32,8 @@
 
 #include "get_chunk_and_distribute_subdaily.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+
     int    i, j, k, idx, day_count;
     long   offset = 0, date_offset;
     float *land_mask = NULL;
@@ -60,8 +60,8 @@ int main(int argc, char **argv)
     control *c;
     c = (control *)malloc(sizeof (control));
 	if (c == NULL) {
-		fprintf(stderr, "control structure: Not allocated enough memory!\n");
-		exit(1);
+        fprintf(stderr, "control structure: Not allocated enough memory!\n");
+        exit(1);
 	}
 
 	met *m;

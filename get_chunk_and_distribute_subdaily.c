@@ -76,12 +76,12 @@ int main(int argc, char **argv) {
 
     if ((c->row_start == -999) || (c->row_end == -999)) {
         fprintf(stderr,"You need to set row start/end on command line\n");
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     if ((c->col_start == -999) || (c->col_end == -999)) {
         fprintf(stderr,"You need to set col start/end on command line\n");
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     /* potential to work on chunks of the whole Australia domain */
@@ -98,45 +98,45 @@ int main(int argc, char **argv) {
 
         /* read land mask file */
         if ((land_mask_fp = fopen(c->land_mask_fn, "r")) == NULL) {
-		    fprintf(stderr, "%s: couldn't open land mask file %s for read\n",
-		            argv[0], c->land_mask_fn);
-		    MPI_Abort(MPI_COMM_WORLD, -1);
-	    }
+            fprintf(stderr, "%s: couldn't open land mask file %s for read\n",
+                    argv[0], c->land_mask_fn);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
 
-	    if ((land_mask = (float *)calloc(c->nrows * c->ncols,
-	                      sizeof(float))) == NULL ) {
-		    fprintf(stderr,"%s: error allocating space for land mask array\n",
-		            argv[0]);
-		    MPI_Abort(MPI_COMM_WORLD, -1);
-	    }
+        if ((land_mask = (float *)calloc(c->nrows * c->ncols,
+                          sizeof(float))) == NULL ) {
+            fprintf(stderr,"%s: error allocating space for land mask array\n",
+                    argv[0]);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
 
         if (fread(land_mask, sizeof(float), c->nrows * c->ncols,
                  land_mask_fp) != c->nrows * c->ncols) {
             fprintf(stderr,"%s: error in reading land mask file\n", *argv);
-		    MPI_Abort(MPI_COMM_WORLD, -1);
-	    }
-	    fclose(land_mask_fp);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+        fclose(land_mask_fp);
 
         /*
         ** use the land/sea mask to run through the chunk and make sure we
         ** aren't processing sea pixels. This just speeds things up a bit
         */
-	    c->num_land_pixels = 0;
-	    for (i = 0; i < c->nrows_in_slice; i++) {
-	        for (j = 0; j < c->ncols_in_slice; j++) {
-	            offset = (i + c->row_start) * c->ncols + (j + c->col_start);
-	            if (land_mask[offset] > c->land_id) {
-	                c->num_land_pixels++;
+        c->num_land_pixels = 0;
+        for (i = 0; i < c->nrows_in_slice; i++) {
+            for (j = 0; j < c->ncols_in_slice; j++) {
+                offset = (i + c->row_start) * c->ncols + (j + c->col_start);
+                if (land_mask[offset] > c->land_id) {
+                    c->num_land_pixels++;
                 }
             }
         }
 
         if ((land_ij = (int *)calloc(c->num_land_pixels * 2,
                        sizeof(int))) == NULL ) {
-		    fprintf(stderr,"%s: error allocating space for land_ij array\n",
-		            argv[0]);
-		    MPI_Abort(MPI_COMM_WORLD, -1);
-	    }
+            fprintf(stderr,"%s: error allocating space for land_ij array\n",
+                    argv[0]);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
         mask_ij(c, land_mask, land_ij);
     }
 
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     if (MPI_Bcast(&(c->num_land_pixels), 1, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting num_land_pixels\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     c->nsize = c->num_land_pixels / c->size;
@@ -159,56 +159,56 @@ int main(int argc, char **argv) {
 
     if (npairs < 0) {
         fprintf(stderr,"Error in distribute_ij\n");
-		MPI_Abort(MPI_COMM_WORLD, mpi_err);
+        MPI_Abort(MPI_COMM_WORLD, mpi_err);
     }
 
     /* allocate space for each ij pair */
     if ((tmax_ij = (float *)calloc(m->tmax_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for tmax_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((tmin_ij = (float *)calloc(m->tmin_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for tmin_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((rain_ij = (float *)calloc(m->rain_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for rain_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((vph09_ij = (float *)calloc(m->vph09_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for vph09_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((vph15_ij = (float *)calloc(m->vph15_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for vph15_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((rad_ij = (float *)calloc(m->rad_ndays, sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for rad_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((years_ij_rad = (int *)calloc(m->rad_ndays,
                         sizeof(int))) == NULL) {
         fprintf(stderr,"Error allocating space for years_ij_rad array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((rad_clim_nonleap_ij = (float *)calloc(365,
                                 sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for rad_clim_nonleap_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if ((rad_clim_leap_ij = (float *)calloc(366,
                              sizeof(float))) == NULL) {
         fprintf(stderr,"Error allocating space for rad_clim_leap_ij array\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     /*
@@ -306,28 +306,28 @@ int main(int argc, char **argv) {
 }
 
 void clparser(int argc, char **argv, control *c) {
-	int i;
+    int i;
 
-	for (i = 1; i < argc; i++) {
-		if (*argv[i] == '-') {
-			if (!strncasecmp(argv[i], "-lm", 3)) {
-			    strcpy(c->land_mask_fn, argv[++i]);
-			} else if (!strncasecmp(argv[i], "-rs", 3)) {
-			    c->row_start = atoi(argv[++i]);
-			} else if (!strncasecmp(argv[i], "-re", 3)) {
-			    c->row_end = atoi(argv[++i]);
-			} else if (!strncasecmp(argv[i], "-cs", 3)) {
-			    c->col_start = atoi(argv[++i]);
-			} else if (!strncasecmp(argv[i], "-ce", 3)) {
-			    c->col_end = atoi(argv[++i]);
-			} else {
+    for (i = 1; i < argc; i++) {
+        if (*argv[i] == '-') {
+            if (!strncasecmp(argv[i], "-lm", 3)) {
+                strcpy(c->land_mask_fn, argv[++i]);
+            } else if (!strncasecmp(argv[i], "-rs", 3)) {
+                c->row_start = atoi(argv[++i]);
+            } else if (!strncasecmp(argv[i], "-re", 3)) {
+                c->row_end = atoi(argv[++i]);
+            } else if (!strncasecmp(argv[i], "-cs", 3)) {
+                c->col_start = atoi(argv[++i]);
+            } else if (!strncasecmp(argv[i], "-ce", 3)) {
+                c->col_end = atoi(argv[++i]);
+            } else {
                 fprintf(stderr,"%s: unknown argument on command line: %s\n",
                         argv[0], argv[i]);
-				exit(EXIT_FAILURE);
-     		}
+                exit(EXIT_FAILURE);
+             }
         }
     }
-	return;
+    return;
 }
 
 void initialise_stuff(control *c) {
@@ -338,10 +338,10 @@ void initialise_stuff(control *c) {
 
     c->nrows = 681;
     c->ncols = 841;
-	c->row_end = -999;
-	c->row_start = -999;
-	c->col_start = -999;
-	c->col_end = -999;
+    c->row_end = -999;
+    c->row_start = -999;
+    c->col_start = -999;
+    c->col_end = -999;
     c->land_id = 0.5; /* Anything > 0.000001 */
     c->nsize = -999;
     c->remainder = -999;
@@ -375,11 +375,11 @@ void mask_ij(control *c, float *land_mask, int *land_ij) {
     long out_offset = 0, in_offset = 0;
 
     for (i = 0; i < c->nrows_in_slice; i++) {
-	    for (j = 0; j < c->ncols_in_slice; j++) {
+        for (j = 0; j < c->ncols_in_slice; j++) {
             in_offset = (i + c->row_start) * c->ncols + (j + c->col_start);
-	        if (land_mask[in_offset] > c->land_id) {
-	            land_ij[out_offset] = c->row_start + i;
-	            land_ij[out_offset+1] = c->col_start + j ;
+            if (land_mask[in_offset] > c->land_id) {
+                land_ij[out_offset] = c->row_start + i;
+                land_ij[out_offset+1] = c->col_start + j ;
                 out_offset += 2;
             }
         }
@@ -440,7 +440,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->tmax_dates), m->tmax_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting tmax_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->tmax_size = distribute(c, land_ij, met_data, &m->tmax_slice, tag1,
                               m->tmax_ndays);
@@ -465,7 +465,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->tmin_dates), m->tmin_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting tmin_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->tmin_size = distribute(c, land_ij, met_data, &m->tmin_slice, tag2,
                               m->tmin_ndays);
@@ -489,7 +489,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->rain_dates), m->rain_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting rain_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->rain_size = distribute(c, land_ij, met_data, &m->rain_slice, tag3,
                               m->rain_ndays);
@@ -513,7 +513,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->vph09_dates), m->vph09_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting vph09_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->vph09_size = distribute(c, land_ij, met_data, &m->vph09_slice, tag4,
                                m->vph09_ndays);
@@ -537,7 +537,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->vph15_dates), m->vph15_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting vph15_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->vph15_size = distribute(c, land_ij, met_data, &m->vph15_slice, tag5,
                               m->vph15_ndays);
@@ -566,7 +566,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (MPI_Bcast(&(*m->rad_dates), m->rad_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting rad_dates\n");
-		MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->rad_size = distribute(c, land_ij, met_data, &m->rad_slice, tag6,
                              m->rad_ndays);
@@ -627,29 +627,29 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
             ndays = 365;
             days_in_month[2] = 28;
         }
-	    for (mth = 1; mth <= 12; mth++) {
-	        for (day = 1; day <= days_in_month[mth]; day++) {
-	            if (day < 10)
-	                sprintf(iday, "0%d", day);
-	            else
-	                sprintf(iday, "%d", day);
+        for (mth = 1; mth <= 12; mth++) {
+            for (day = 1; day <= days_in_month[mth]; day++) {
+                if (day < 10)
+                    sprintf(iday, "0%d", day);
+                else
+                    sprintf(iday, "%d", day);
 
-	            if (mth < 10)
-	                sprintf(imth, "0%d", mth);
-	            else
-	                sprintf(imth, "%d", mth);
+                if (mth < 10)
+                    sprintf(imth, "0%d", mth);
+                else
+                    sprintf(imth, "%d", mth);
 
-	            if ((strncmp(met_var, "vph09", 5) == 0) ||
+                if ((strncmp(met_var, "vph09", 5) == 0) ||
                     (strncmp(met_var, "vph15", 5) == 0)) {
 
-	                sprintf(infname,
-	                        "%s/%s/bom-%s-day-%d%s%s-%d%s%s.flt",
-	                         c->fdir, met_var, met_var, yr, imth, iday, yr,
-	                         imth, iday);
-	            } else {
-	                sprintf(infname, "%s/%s/%d%s%s_%s.flt",
-	                        c->fdir, met_var, yr, imth, iday, met_var);
-	            }
+                    sprintf(infname,
+                            "%s/%s/bom-%s-day-%d%s%s-%d%s%s.flt",
+                             c->fdir, met_var, met_var, yr, imth, iday, yr,
+                             imth, iday);
+                } else {
+                    sprintf(infname, "%s/%s/%d%s%s_%s.flt",
+                            c->fdir, met_var, yr, imth, iday, met_var);
+                }
 
                 /* read the file file */
                 if ((fp = fopen(infname, "r")) == NULL) {
@@ -699,8 +699,8 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 (*dates)[date_count+2] = day;
                 date_count += 3;
                 day_count++;
-	        }
-	    }
+            }
+        }
     }
 
     free(met_data_day);
@@ -810,13 +810,13 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
 
     if (c->rank == c->root_processor) {
         if ((send_count = (int *)calloc(c->size, sizeof(int))) == NULL) {
-	        fprintf(stderr, "Error allocating space for send_count array\n");
-		    MPI_Abort(MPI_COMM_WORLD, -1);
+            fprintf(stderr, "Error allocating space for send_count array\n");
+            MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
         if ((position = (int *)calloc(c->size, sizeof(int))) == NULL) {
-	        fprintf(stderr, "Error allocating space for position array\n");
-		    MPI_Abort(MPI_COMM_WORLD, -1);
+            fprintf(stderr, "Error allocating space for position array\n");
+            MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
         /* Calculate send counts & displacements */
@@ -1207,7 +1207,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     if (fwrite(odata, sizeof(float), ovars * odays * NHRS, ofp) !=\
                                      ovars * odays * NHRS) {
         fprintf(stderr, "Error writing spinup file\n");
-	    exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     fclose(ofp);
@@ -1417,8 +1417,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     if (fwrite(odata, sizeof(float), ovars * odays * NHRS, ofp) !=\
                                      ovars * odays * NHRS) {
-	   fprintf(stderr, "Error writing forcing file\n");
-	   exit(EXIT_FAILURE);
+       fprintf(stderr, "Error writing forcing file\n");
+       exit(EXIT_FAILURE);
     }
 
     fclose(ofp);
